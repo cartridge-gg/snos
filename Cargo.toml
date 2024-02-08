@@ -6,9 +6,12 @@ version = "0.1.0"
 [dependencies]
 anyhow = "1.0.75"
 base64 = "0.21.3"
+bincode = { version = "2.0.0-rc.3", default-features = false, features = [
+    "serde",
+] }
 bitvec = { version = "1.0.1", features = ["serde"] }
 blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "snos/callinfo-clone", features = ["clone", "testing"] }
-cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", features = ["extensive_hints"] }
+cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", rev = "7abbb39e11232bb260fa603a362ab4d071c4162c", features = ["extensive_hints"] }
 hex = "0.4.3"
 indexmap = "1.9.2"
 indoc = "2"
