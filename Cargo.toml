@@ -32,10 +32,6 @@ tokio = "1.32.0"
 uuid = { version = "1.4.0", features = ["v4", "serde"] }
 zip = { version = "0.6.6", features = ["deflate-zlib"] }
 
-katana-primitives = { path = "/mnt/g/dojo/dojo/crates/katana/primitives" }
-# katana-provider = { path = "/mnt/g/dojo/dojo/crates/katana/storage/provider" }
-#katana-primitives = { git = "https://github.com/glihm/dojo", branch = "wip-250" }
-
 [dev-dependencies]
 pretty_assertions = "1.4.0"
 rstest = "0.18.2"
