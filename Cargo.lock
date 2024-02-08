@@ -1006,7 +1006,7 @@ dependencies = [
 [[package]]
 name = "cairo-vm"
 version = "1.0.0-rc0"
-source = "git+https://github.com/lambdaclass/cairo-vm#0ea638f1227dccad33a73330cd070d4d68841ff7"
+source = "git+https://github.com/lambdaclass/cairo-vm#7abbb39e11232bb260fa603a362ab4d071c4162c"
 dependencies = [
  "anyhow",
  "bincode",
@@ -4328,6 +4328,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64 0.21.7",
+ "bincode",
  "bitvec",
  "blockifier",
  "cairo-vm 1.0.0-rc0",

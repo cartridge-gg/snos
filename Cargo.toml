@@ -6,6 +6,9 @@ version = "0.1.0"
 [dependencies]
 anyhow = "1.0.75"
 base64 = "0.21.3"
+bincode = { version = "2.0.0-rc.3", default-features = false, features = [
+    "serde",
+] }
 bitvec = { version = "1.0.1", features = ["serde"] }
 blockifier = { git = "https://github.com/starkware-libs/blockifier", tag = "v0.4.0-rc9.2" }
 cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", features = ["extensive_hints"] }
