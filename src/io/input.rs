@@ -14,7 +14,7 @@ use crate::state::trie::{MerkleTrie, StarkHasher};
 use crate::utils::{Felt252HexNoPrefix, Felt252Num, Felt252Str, Felt252StrDec};
 
 #[serde_as]
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct StarknetOsInput {
     pub contract_state_commitment_info: CommitmentInfo,
     pub contract_class_commitment_info: CommitmentInfo,
@@ -66,7 +66,7 @@ impl CommitmentInfo {
     }
 }
 #[serde_as]
-#[derive(Deserialize, Clone, Debug, Serialize)]
+#[derive(Deserialize, Clone, Debug, Serialize, Default)]
 pub struct ContractState {
     #[serde_as(as = "Felt252HexNoPrefix")]
     pub contract_hash: Felt252,
@@ -76,7 +76,7 @@ pub struct ContractState {
 }
 
 #[serde_as]
-#[derive(Deserialize, Clone, Debug, Serialize)]
+#[derive(Deserialize, Clone, Debug, Serialize, Default)]
 pub struct StorageCommitment {
     #[serde_as(as = "Felt252HexNoPrefix")]
     pub root: Felt252,

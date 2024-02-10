@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use blockifier::abi::constants::{INITIAL_GAS_COST, MAX_STEPS_PER_TX, N_STEPS_RESOURCE};
-use blockifier::block_context::{BlockContext, FeeTokenAddresses, GasPrices, BlockInfo, ChainInfo};
+use blockifier::block_context::{BlockContext, BlockInfo, ChainInfo, FeeTokenAddresses, GasPrices};
 use blockifier::transaction::objects::FeeType;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -99,7 +99,7 @@ impl StarknetGeneralConfig {
     pub fn empty_block_context(&self) -> BlockContext {
         BlockContext {
             chain_info: ChainInfo {
-                chain_id: self.starknet_os_config.chain_id.clone(),                
+                chain_id: self.starknet_os_config.chain_id.clone(),
                 fee_token_addresses: FeeTokenAddresses {
                     eth_fee_token_address: self.starknet_os_config.fee_token_address,
                     strk_fee_token_address: contract_address!("0x0"),
@@ -110,12 +110,17 @@ impl StarknetGeneralConfig {
                 block_timestamp: BlockTimestamp(0),
                 sequencer_address: self.sequencer_address,
                 vm_resource_fee_cost: self.cairo_resource_fee_weights.clone(),
-                gas_prices: GasPrices { eth_l1_gas_price: self.min_gas_price, strk_l1_gas_price: self.min_gas_price, eth_l1_data_gas_price: 0, strk_l1_data_gas_price: 0 },
+                gas_prices: GasPrices {
+                    eth_l1_gas_price: self.min_gas_price,
+                    strk_l1_gas_price: self.min_gas_price,
+                    eth_l1_data_gas_price: 0,
+                    strk_l1_data_gas_price: 0,
+                },
                 invoke_tx_max_n_steps: self.invoke_tx_max_n_steps,
                 validate_max_n_steps: self.validate_max_n_steps,
                 max_recursion_depth: 50,
                 use_kzg_da: false,
-            }
+            },
         }
     }
 }

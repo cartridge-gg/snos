@@ -28,15 +28,15 @@ use execution::helper::ExecutionHelperWrapper;
 use io::output::StarknetOsOutput;
 use state::SharedState;
 
-//use katana_primitives::block::BlockTag;
+// use katana_primitives::block::BlockTag;
 
 pub struct SnOsRunner {
     // CairoVM layout type(default `starknet_with_keccak`)
-    layout: String,
+    pub layout: String,
     // Path to compiled os program (default `build/os_latest.json`)
-    os_path: String,
+    pub os_path: String,
     // Path to StarknetOsInput JSON (default `build/input.json`)
-    input_path: String,
+    pub input_path: String,
     // Block context to run against
     pub block_context: BlockContext,
 }
@@ -112,22 +112,6 @@ impl SnOsRunner {
         let pie = cairo_runner.get_cairo_pie(&vm).map_err(|e| SnOsError::PieParsing(format!("{e}")))?;
 
         Ok(pie)
-    }
-
-    pub fn with_layout(layout: &str) -> Self {
-        Self { layout: layout.to_string(), ..Self::default() }
-    }
-
-    pub fn with_os_path(os_path: &str) -> Self {
-        Self { os_path: os_path.to_string(), ..Self::default() }
-    }
-
-    pub fn with_input_path(input_path: &str) -> Self {
-        Self { input_path: input_path.to_string(), ..Self::default() }
-    }
-
-    pub fn with_block_context(block_context: BlockContext) -> Self {
-        Self { block_context, ..Self::default() }
     }
 }
 
@@ -266,28 +250,21 @@ impl SnOsRunner {
         }
 
         if let (Some(file_path), Some(ref trace_file), Some(ref memory_file)) =
-        (air_private_input, trace_file, memory_file)
-    {
-        // Get absolute paths of trace_file & memory_file
-        let trace_path = trace_file
-            .as_path()
-            .canonicalize()
-            .unwrap_or(trace_file.clone())
-            .to_string_lossy()
-            .to_string();
-        let memory_path = memory_file
-            .as_path()
-            .canonicalize()
-            .unwrap_or(memory_file.clone())
-            .to_string_lossy()
-            .to_string();
+            (air_private_input, trace_file, memory_file)
+        {
+            // Get absolute paths of trace_file & memory_file
+            let trace_path =
+                trace_file.as_path().canonicalize().unwrap_or(trace_file.clone()).to_string_lossy().to_string();
+            let memory_path =
+                memory_file.as_path().canonicalize().unwrap_or(memory_file.clone()).to_string_lossy().to_string();
 
-        let json = cairo_runner
-            .get_air_private_input(&vm)
-            .to_serializable(trace_path, memory_path)
-            .serialize_json().unwrap();
-        std::fs::write(file_path, json)?;
-    }
+            let json = cairo_runner
+                .get_air_private_input(&vm)
+                .to_serializable(trace_path, memory_path)
+                .serialize_json()
+                .unwrap();
+            std::fs::write(file_path, json)?;
+        }
 
         Ok(())
     }

@@ -51,8 +51,12 @@ impl ExecutionHelperWrapper {
     pub fn new(tx_execution_infos: Vec<TransactionExecutionInfo>, block_context: &BlockContext) -> Self {
         // Block number and block hash (current_block_number - buffer) block buffer=STORED_BLOCK_HASH_BUFFER
         // Hash that is going to be written by this OS run
-        let prev_block_context =
-            block_context.block_info.block_number.0.checked_sub(STORED_BLOCK_HASH_BUFFER).map(|_| block_context.clone());
+        let prev_block_context = block_context
+            .block_info
+            .block_number
+            .0
+            .checked_sub(STORED_BLOCK_HASH_BUFFER)
+            .map(|_| block_context.clone());
 
         Self {
             execution_helper: Rc::new(RefCell::new(ExecutionHelper {
