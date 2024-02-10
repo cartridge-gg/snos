@@ -37,8 +37,8 @@ pretty_assertions = "1.4.0"
 rstest = "0.18.2"
 
 [patch."https://github.com/starkware-libs/blockifier"]
-blockifier = { git = "https://github.com/dojoengine/blockifier", rev = "3c138d606a46c88ecd656808f14dfca78de1926b" }
+blockifier = { git = "https://github.com/dojoengine/blockifier", rev = "03a7e125f793de430c6c19f4003101a6c28f96ac" }
 
 [patch.crates-io]
-cairo-felt = { git = "https://github.com/dojoengine/cairo-rs.git", rev = "368c713f8545af435b1b0a8d3e56b616f66f955a" }
-cairo-vm = { git = "https://github.com/dojoengine/cairo-rs.git", rev = "368c713f8545af435b1b0a8d3e56b616f66f955a" }
+cairo-felt = { git = "https://github.com/dojoengine/cairo-rs.git", rev = "1031381" }
+cairo-vm = { git = "https://github.com/dojoengine/cairo-rs.git", rev = "1031381" }

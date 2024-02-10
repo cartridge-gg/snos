@@ -3,7 +3,7 @@ use std::any::Any;
 use std::collections::hash_map::IntoIter;
 use std::collections::{HashMap, HashSet};
 
-use blockifier::block_context::BlockContext;
+use blockifier::context::BlockContext;
 use cairo_vm::hint_processor::builtin_hint_processor::dict_manager::Dictionary;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
     get_ptr_from_var_name, insert_value_from_var_name, insert_value_into_ap,
@@ -183,7 +183,7 @@ pub fn block_number(
 ) -> Result<(), HintError> {
     // TODO: replace w/ block context from syscall handler
     let block_context = exec_scopes.get_ref::<BlockContext>("block_context")?;
-    insert_value_into_ap(vm, Felt252::from(block_context.block_info.block_number.0))
+    insert_value_into_ap(vm, Felt252::from(block_context.block_info().block_number.0))
 }
 
 pub const DEPRECATED_BLOCK_TIMESTAMP: &str =
@@ -196,7 +196,7 @@ pub fn block_timestamp(
     _constants: &HashMap<String, Felt252>,
 ) -> Result<(), HintError> {
     let block_context = exec_scopes.get_ref::<BlockContext>("block_context")?;
-    insert_value_into_ap(vm, Felt252::from(block_context.block_info.block_timestamp.0))
+    insert_value_into_ap(vm, Felt252::from(block_context.block_info().block_timestamp.0))
 }
 
 pub const CHAIN_ID: &str = "memory[ap] = to_felt_or_relocatable(os_input.general_config.chain_id.value)";

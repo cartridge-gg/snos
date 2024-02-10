@@ -12,7 +12,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use bincode::enc::write::Writer;
-use blockifier::block_context::BlockContext;
+use blockifier::context::BlockContext;
 use blockifier::state::state_api::StateReader;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use cairo_vm::cairo_run::{self, CairoRunConfig};
