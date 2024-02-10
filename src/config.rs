@@ -71,7 +71,7 @@ impl Default for StarknetGeneralConfig {
             Ok(conf) => conf,
             Err(_) => Self {
                 starknet_os_config: StarknetOsConfig {
-                    chain_id: ChainId("SN_GOERLI".to_string()),
+                    chain_id: ChainId("534e5f474f45524c49".to_string()),
                     fee_token_address: contract_address!(DEFAULT_FEE_TOKEN_ADDR),
                 },
                 contract_storage_commitment_tree_height: DEFAULT_STORAGE_TREE_HEIGHT as u64,
