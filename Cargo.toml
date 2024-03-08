@@ -10,7 +10,7 @@ bincode = { version = "2.0.0-rc.3", default-features = false, features = [
     "serde",
 ] }
 bitvec = { version = "1.0.1", features = ["serde"] }
-blockifier = { git = "https://github.com/starkware-libs/blockifier", tag = "v0.4.0-rc9.2" }
+blockifier = { git = "https://github.com/starkware-libs/blockifier", tag = "v0.5.0-dev.0" }
 cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", features = ["extensive_hints"] }
 hex = "0.4.3"
 indexmap = "1.9.2"
