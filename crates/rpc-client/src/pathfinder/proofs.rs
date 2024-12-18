@@ -65,11 +65,11 @@ impl ContractData {
 
         tracing::debug!("Verifying keys {:?} for proofs {:?}", storage_keys, self.storage_proofs);
 
-/*         for (index, storage_key) in storage_keys.iter().enumerate() {
+        for (index, storage_key) in storage_keys.iter().enumerate() {
             if let Err(e) = verify_proof::<PedersenHash>(*storage_key, self.root, &self.storage_proofs[index]) {
                 errors.push(e);
             }
-        } */
+        }
 
         if errors.is_empty() { Ok(()) } else { Err(errors) }
     }

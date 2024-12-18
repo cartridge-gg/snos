@@ -79,6 +79,7 @@ impl PathfinderRpcClient {
     ) -> Result<PathfinderProof, ClientError> {
         let json = json!({
             "block_id": { "block_number": block_number },
+            "contract_addresses": [contract_address],
             "contracts_storage_keys": [{
                 "contract_address": contract_address,
                 "storage_keys": keys
