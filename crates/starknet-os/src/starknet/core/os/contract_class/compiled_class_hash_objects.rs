@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use cairo_vm::Felt252;
 use num_bigint::BigUint;
-use starknet_crypto::{poseidon_hash_many, FieldElement};
+use starknet_crypto::{poseidon_hash_many, Felt};
 use starknet_os_types::hash::Hash;
 
 use crate::execution::syscall_handler_utils::SyscallExecutionError;
@@ -92,15 +92,13 @@ impl BytecodeSegmentedNode {
         // To compute the hash we'll need the segment length and the hash from the inner structure for each
         // segment. After calling poseidon hash function, we just add 1 to the result
         for segment in &self.segments {
-            felts.push(FieldElement::from(segment.segment_length.0));
+            felts.push(Felt::from(segment.segment_length.0));
 
             let inner_hash = segment.inner_structure.hash()?;
-            felts.push(FieldElement::from_byte_slice_be(inner_hash.deref()).map_err(|_| {
-                SyscallExecutionError::InternalError("conversion from Hash to FieldElement failed".into())
-            })?);
+            felts.push(Felt::from_bytes_be_slice(inner_hash.deref()));
         }
 
-        let ret = poseidon_hash_many(&felts) + FieldElement::from(1u8);
+        let ret = poseidon_hash_many(&felts) + Felt::from(1u8);
         Ok(Hash::from_bytes_be(ret.to_bytes_be()))
     }
 }
@@ -117,15 +115,10 @@ impl BytecodeLeaf {
     }
 
     pub fn hash(&self) -> Result<Hash, SyscallExecutionError> {
-        let vec_field_elements: Result<Vec<_>, _> =
-            self.data.iter().map(|value| FieldElement::from_byte_slice_be(&value.to_bytes_be())).collect();
+        let vec_field_elements: Vec<_> =
+            self.data.iter().map(|value| Felt::from_bytes_be_slice(&value.to_bytes_be())).collect();
 
-        let hash = match vec_field_elements {
-            Ok(elements) => Hash::from_bytes_be(poseidon_hash_many(&elements).to_bytes_be()),
-            Err(_) => {
-                return Err(SyscallExecutionError::InternalError("Invalid bytecode segment leaf".into()));
-            }
-        };
+        let hash = Hash::from_bytes_be(poseidon_hash_many(&vec_field_elements).to_bytes_be());
 
         Ok(hash)
     }

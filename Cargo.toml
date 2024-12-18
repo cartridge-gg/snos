@@ -59,7 +59,7 @@ pathfinder-common = { git = "https://github.com/Moonsong-Labs/pathfinder", rev =
 pathfinder-crypto = { git = "https://github.com/Moonsong-Labs/pathfinder", rev = "9c19d9a37be8f447ec4548456c440ccbd0e44260", package = "pathfinder-crypto" }
 pathfinder-gateway-types = { git = "https://github.com/Moonsong-Labs/pathfinder", rev = "9c19d9a37be8f447ec4548456c440ccbd0e44260", package = "starknet-gateway-types" }
 pathfinder-serde = { git = "https://github.com/Moonsong-Labs/pathfinder", rev = "9c19d9a37be8f447ec4548456c440ccbd0e44260", package = "pathfinder-serde" }
-reqwest = { version = "0.11.18", features = ["blocking", "json"] }
+reqwest = { version = "0.11.27", features = ["blocking", "json"] }
 rpc-client = { path = "crates/rpc-client" }
 rpc-replay = { path = "crates/rpc-replay" }
 serde = { version = "1.0.188", features = ["derive"] }
@@ -70,10 +70,10 @@ sha2 = "0.10.8"
 starknet = "0.11.0"
 starknet_api = { git = "https://github.com/Moonsong-Labs/sequencer", rev = "6624e910c57db9a16f1607c1ed26f7d8f1114e73", features = ["testing"] }
 starknet-core = "0.11.1"
-starknet-crypto = "0.6.2"
+starknet-crypto = "0.7.1"
 starknet-os = { path = "crates/starknet-os" }
 starknet-os-types = { path = "crates/starknet-os-types" }
-starknet-types-core = "0.1.5"
+starknet-types-core = { version = "0.1.7", features = [ "arbitrary", "hash" ] }
 thiserror = "1.0.48"
 tokio = { version = "1.37.0", features = ["rt-multi-thread"] }
 uuid = { version = "1.4.0", features = ["v4", "serde"] }

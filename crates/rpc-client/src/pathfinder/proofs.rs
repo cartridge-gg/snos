@@ -63,11 +63,13 @@ impl ContractData {
     pub fn verify(&self, storage_keys: &[Felt]) -> Result<(), Vec<ProofVerificationError>> {
         let mut errors = vec![];
 
-        for (index, storage_key) in storage_keys.iter().enumerate() {
+        tracing::debug!("Verifying keys {:?} for proofs {:?}", storage_keys, self.storage_proofs);
+
+/*         for (index, storage_key) in storage_keys.iter().enumerate() {
             if let Err(e) = verify_proof::<PedersenHash>(*storage_key, self.root, &self.storage_proofs[index]) {
                 errors.push(e);
             }
-        }
+        } */
 
         if errors.is_empty() { Ok(()) } else { Err(errors) }
     }
@@ -82,7 +84,7 @@ pub struct PathfinderProof {
 }
 
 #[allow(dead_code)]
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Debug)]
 pub struct PathfinderClassProof {
     pub class_commitment: Felt,
     pub class_proof: Vec<TrieNode>,

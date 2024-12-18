@@ -1,6 +1,6 @@
 use starknet_core::types::SierraEntryPoint;
 use starknet_core::utils::starknet_keccak;
-use starknet_crypto::{poseidon_hash_many, FieldElement};
+use starknet_crypto::poseidon_hash_many;
 use starknet_types_core::felt::Felt;
 
 const CLASS_VERSION_PREFIX: &str = "CONTRACT_CLASS_V";
@@ -9,7 +9,7 @@ const CLASS_VERSION_PREFIX: &str = "CONTRACT_CLASS_V";
 /// FieldElement types. There is no `From` implementation between these types so this function
 /// masks some ugly byte mashing.
 fn poseidon_hash_many_felts<FeltIter: Iterator<Item = Felt>>(felts: FeltIter) -> Felt {
-    let field_elements: Vec<_> = felts.map(|x| FieldElement::from_bytes_be(&x.to_bytes_be()).unwrap()).collect();
+    let field_elements: Vec<_> = felts.map(|x| Felt::from_bytes_be(&x.to_bytes_be())).collect();
     let hash = poseidon_hash_many(&field_elements);
 
     Felt::from_bytes_be(&hash.to_bytes_be())

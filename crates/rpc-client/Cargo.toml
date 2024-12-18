@@ -11,7 +11,9 @@ reqwest = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 starknet = { workspace = true }
+starknet-crypto = { workspace = true }
 starknet-os = { workspace = true }
 starknet-types-core = { workspace = true }
 thiserror = { workspace = true }
 tracing = { version = "0.1.38", features = [ "log" ], default-features = false }
+katana-rpc-types = { path = "/Users/glihm/cgg/dojo/crates/katana/rpc/rpc-types" }
