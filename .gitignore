@@ -24,3 +24,5 @@ run_os.py
 run_bootloader.py
 prover
 prover.zip
+
+cairo-venv

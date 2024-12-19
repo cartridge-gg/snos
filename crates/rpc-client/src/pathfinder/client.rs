@@ -77,27 +77,6 @@ impl PathfinderRpcClient {
         contract_address: Felt,
         keys: &[Felt],
     ) -> Result<PathfinderProof, ClientError> {
-/*         let json = json!({
-            "block_id": { "block_number": block_number },
-            "contract_addresses": [contract_address],
-            "contracts_storage_keys": [{
-                "contract_address": contract_address,
-                "storage_keys": keys
-            }]
-        });
-
-        log::debug!(
-            "querying starknet_getProofs for address {:x} keys {:?} at block {:x}:\n {}",
-            contract_address,
-            keys,
-            block_number,
-            json
-        );
-        let r: Result<GetStorageProofResponse, ClientError> =
-            post_jsonrpc_request(&self.http_client, &self.rpc_base_url, "starknet_getStorageProof", json).await;
-        log::debug!("response: {:?}", r);
- */
-
         let mut proofs = vec![];
         for key in keys {
             proofs.push(self.get_proof_one_key(block_number, contract_address, *key).await?);

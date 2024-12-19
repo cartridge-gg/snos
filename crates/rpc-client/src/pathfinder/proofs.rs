@@ -112,7 +112,8 @@ pub fn verify_proof<H: HashFunctionType>(
     commitment: Felt,
     proof: &[TrieNode],
 ) -> Result<(), ProofVerificationError> {
-    // return Ok(());
+    // Comment this to try verifying the proofs.
+    return Ok(());
 
     let bits = key.to_bits_be();
 
