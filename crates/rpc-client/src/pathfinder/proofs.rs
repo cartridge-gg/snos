@@ -1,7 +1,6 @@
 use serde::Deserialize;
 use starknet_os::config::DEFAULT_STORAGE_TREE_HEIGHT;
 use starknet_os::crypto::pedersen::PedersenHash;
-use starknet_os::crypto::poseidon::PoseidonHash;
 use starknet_os::starkware_utils::commitment_tree::base_types::{Height, Length, NodePath};
 use starknet_os::starkware_utils::commitment_tree::patricia_tree::nodes::{BinaryNodeFact, EdgeNodeFact};
 use starknet_os::storage::dict_storage::DictStorage;
@@ -66,12 +65,14 @@ impl ContractData {
         tracing::debug!("Verifying keys {:?} for proofs {:?}", storage_keys, self.storage_proofs);
 
         for (index, storage_key) in storage_keys.iter().enumerate() {
+            tracing::debug!("Verifying key {:?}", storage_key);
+
             if let Err(e) = verify_proof::<PedersenHash>(*storage_key, self.root, &self.storage_proofs[index]) {
                 errors.push(e);
             }
         }
 
-        if errors.is_empty() { Ok(()) } else { Err(errors) }
+        if errors.is_empty() { dbg!("OK"); Ok(()) } else { Err(errors) }
     }
 }
 
@@ -93,7 +94,7 @@ pub struct PathfinderClassProof {
 impl PathfinderClassProof {
     /// Verifies that the class proof is valid.
     pub fn verify(&self, class_hash: Felt) -> Result<(), ProofVerificationError> {
-        verify_proof::<PoseidonHash>(class_hash, self.class_commitment, &self.class_proof)
+        verify_proof::<PedersenHash>(class_hash, self.class_commitment, &self.class_proof)
     }
 }
 
@@ -111,6 +112,8 @@ pub fn verify_proof<H: HashFunctionType>(
     commitment: Felt,
     proof: &[TrieNode],
 ) -> Result<(), ProofVerificationError> {
+    // return Ok(());
+
     let bits = key.to_bits_be();
 
     let mut parent_hash = commitment;
@@ -120,7 +123,11 @@ pub fn verify_proof<H: HashFunctionType>(
     let mut index = start;
 
     for node in proof.iter() {
+        dbg!(&node);
+        dbg!(&proof);
         let node_hash = node.hash::<H>();
+        dbg!(&parent_hash);
+        dbg!(&node_hash);
         if node_hash != parent_hash {
             return Err(ProofVerificationError::InvalidChildNodeHash { node_hash, parent_hash });
         }
