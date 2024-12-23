@@ -1137,17 +1137,20 @@ dependencies = [
 [[package]]
 name = "bonsai-trie"
 version = "0.1.0"
-source = "git+https://github.com/madara-alliance/bonsai-trie/?rev=56d7d62#56d7d62232fd72419f1d50de8bc747b70a9db68f"
+source = "git+https://github.com/dojoengine/bonsai-trie/?branch=kariy%2Findexmap#d2741d49d14210f675195a9a607910bf76bbed04"
 dependencies = [
  "bitvec",
  "derive_more 0.99.18",
  "hashbrown 0.14.5",
+ "indexmap 2.6.0",
  "log",
  "parity-scale-codec",
  "rayon",
  "serde",
+ "slotmap",
  "smallvec",
  "starknet-types-core",
+ "thiserror 2.0.8",
 ]
 
 [[package]]
@@ -3650,7 +3653,6 @@ name = "katana-db"
 version = "1.0.8"
 dependencies = [
  "anyhow",
- "bitvec",
  "dojo-metrics",
  "katana-primitives",
  "katana-trie",
@@ -3663,8 +3665,6 @@ dependencies = [
  "serde",
  "serde_json",
  "smallvec",
- "starknet",
- "starknet-types-core",
  "tempfile",
  "thiserror 1.0.65",
  "tracing",
@@ -3678,6 +3678,7 @@ dependencies = [
  "katana-cairo",
  "katana-primitives",
  "katana-provider",
+ "katana-trie",
  "parking_lot",
  "starknet",
  "thiserror 1.0.65",
@@ -3761,6 +3762,7 @@ dependencies = [
  "katana-pool",
  "katana-primitives",
  "katana-provider",
+ "katana-trie",
  "num-traits 0.2.19",
  "serde",
  "serde_json",
@@ -6059,6 +6061,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f92a496fb766b417c996b9c5e57daf2f7ad3b0bebe1ccfca4856390e3d3bb67"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "slotmap"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dbff4acf519f630b3a3ddcfaea6c06b42174d9a44bc70c620e9ed1649d58b82a"
+dependencies = [
+ "version_check",
 ]
 
 [[package]]
