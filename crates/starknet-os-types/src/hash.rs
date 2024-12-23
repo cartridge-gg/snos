@@ -91,7 +91,7 @@ impl From<Hash> for ClassHash {
 }
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
-pub struct GenericClassHash(Hash);
+pub struct GenericClassHash(pub Hash);
 
 impl GenericClassHash {
     pub fn new(hash: Hash) -> Self {

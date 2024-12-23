@@ -271,6 +271,8 @@ pub async fn prove_block(
 
     let compiled_classes = processed_state_update.compiled_classes;
     let deprecated_compiled_classes = processed_state_update.deprecated_compiled_classes;
+    dbg!(&compiled_classes.keys());
+    dbg!(&deprecated_compiled_classes.keys());
     let declared_class_hash_component_hashes: HashMap<_, _> = processed_state_update
         .declared_class_hash_component_hashes
         .into_iter()

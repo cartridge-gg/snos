@@ -40,6 +40,7 @@ pub(crate) async fn get_formatted_state_update(
                 panic!("Block is still pending!")
             }
         };
+    dbg!(&state_update);
     let state_diff = state_update.state_diff;
 
     // Extract other contracts used in our block from the block trace

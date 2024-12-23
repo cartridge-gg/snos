@@ -82,7 +82,7 @@ impl PathfinderRpcClient {
             proofs.push(self.get_proof_one_key(block_number, contract_address, *key).await?);
         }
 
-        dbg!(&proofs);
+        // dbg!(&proofs);
 
         let mut storage_proofs = vec![];
         for p in proofs.iter() {
@@ -96,7 +96,7 @@ impl PathfinderRpcClient {
             data.storage_proofs = storage_proofs;
         }
 
-        dbg!(&p0);
+        // dbg!(&p0);
 
         Ok(p0)
     }
@@ -126,7 +126,7 @@ impl PathfinderRpcClient {
         let r: Result<GetStorageProofResponse, ClientError> =
             post_jsonrpc_request(&self.http_client, &self.rpc_base_url, "starknet_getStorageProof", json).await;
 
-        dbg!("KATANA", &r);
+        // dbg!("KATANA", &r);
 
         Ok(katana_to_pathfinder_proof(r?))
     }
@@ -159,7 +159,7 @@ fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> PathfinderProof
         proof.global_roots.classes_tree_root,
     ]);
 
-    dbg!(&proof.contracts_proof.nodes);
+    // dbg!(&proof.contracts_proof.nodes);
 
     let storage_root = if proof.contracts_storage_proofs.nodes.is_empty() || proof.contracts_storage_proofs.nodes[0].0.is_empty() {
         Felt::ZERO
@@ -167,7 +167,7 @@ fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> PathfinderProof
         proof.contracts_storage_proofs.nodes[0].0[0].node_hash
     };
 
-    dbg!(&storage_root);
+    // dbg!(&storage_root);
 
     // Build the storage proofs to have one array for each key.
     let mut storage_proofs: Vec<Vec<TrieNode>> = vec![];
@@ -196,8 +196,8 @@ fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> PathfinderProof
     let contract_state_root = starknet_crypto::pedersen_hash(&contract_trie_root, &nonce);
     let contract_state_root = starknet_crypto::pedersen_hash(&contract_state_root, &Felt::ZERO);
 
-    dbg!(&contract_state_root);
-    dbg!(&proof.global_roots.contracts_tree_root);
+    // dbg!(&contract_state_root);
+    // dbg!(&proof.global_roots.contracts_tree_root);
 
     let p = PathfinderProof {
         state_commitment,
@@ -213,7 +213,7 @@ fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> PathfinderProof
         },
     };
 
-    dbg!(&p);
+    // dbg!(&p);
 
     p
 }
