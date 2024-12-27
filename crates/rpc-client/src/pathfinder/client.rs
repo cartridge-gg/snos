@@ -6,6 +6,7 @@ use serde_json::json;
 use starknet::macros::felt;
 use starknet_types_core::felt::Felt;
 
+use super::proofs::EdgePath;
 use crate::pathfinder::proofs::{PathfinderClassProof, PathfinderProof, TrieNode};
 
 #[derive(Debug, thiserror::Error)]
@@ -161,11 +162,12 @@ fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> PathfinderProof
 
     // dbg!(&proof.contracts_proof.nodes);
 
-    let storage_root = if proof.contracts_storage_proofs.nodes.is_empty() || proof.contracts_storage_proofs.nodes[0].0.is_empty() {
-        Felt::ZERO
-    } else {
-        proof.contracts_storage_proofs.nodes[0].0[0].node_hash
-    };
+    let storage_root =
+        if proof.contracts_storage_proofs.nodes.is_empty() || proof.contracts_storage_proofs.nodes[0].0.is_empty() {
+            Felt::ZERO
+        } else {
+            proof.contracts_storage_proofs.nodes[0].0[0].node_hash
+        };
 
     // dbg!(&storage_root);
 
@@ -173,8 +175,8 @@ fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> PathfinderProof
     let mut storage_proofs: Vec<Vec<TrieNode>> = vec![];
     for n in proof.contracts_storage_proofs.nodes {
         let mut node_proofs = vec![];
-        for nh in n.0.iter() {
-            node_proofs.push(nh.node.into());
+        for nh in &n.0 {
+            node_proofs.push(nh.node.clone().into());
         }
         storage_proofs.push(node_proofs);
     }
@@ -190,7 +192,7 @@ fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> PathfinderProof
     let nonce = proof.contracts_proof.contract_leaves_data[0].nonce;
     // let storage_root = proof.contracts_proof.nodes[0].0[0].node_hash;
 
-    //dbg!(&proof.contracts_proof.nodes[0].node_hash);
+    // dbg!(&proof.contracts_proof.nodes[0].node_hash);
 
     let contract_trie_root = starknet_crypto::pedersen_hash(&class_hash, &storage_root);
     let contract_state_root = starknet_crypto::pedersen_hash(&contract_trie_root, &nonce);
@@ -202,14 +204,11 @@ fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> PathfinderProof
     let p = PathfinderProof {
         state_commitment,
         class_commitment: Some(proof.global_roots.classes_tree_root),
-        contract_proof: proof.contracts_proof.nodes.iter().map(|n| {dbg!(&n); n.node.into()}).collect(),
+        contract_proof: proof.contracts_proof.nodes.iter().map(|n| n.node.clone().into()).collect(),
         contract_data: if storage_root == Felt::ZERO {
             None
         } else {
-            Some(super::proofs::ContractData {
-                root: contract_state_root,
-                storage_proofs,
-            })
+            Some(super::proofs::ContractData { root: contract_state_root, storage_proofs })
         },
     };
 
@@ -218,10 +217,21 @@ fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> PathfinderProof
     p
 }
 
-fn katana_to_pathfinder_class_proof(_proof: GetStorageProofResponse) -> PathfinderClassProof {
-    let p = PathfinderClassProof { class_commitment: Felt::ZERO, class_proof: vec![] };
-
-    p
+pub(crate) fn katana_to_pathfinder_class_proof(proof: GetStorageProofResponse) -> PathfinderClassProof {
+    PathfinderClassProof {
+        class_commitment: proof.global_roots.classes_tree_root,
+        class_proof: proof
+            .classes_proof
+            .nodes
+            .iter()
+            .map(|node| match node.node {
+                MerkleNode::Binary { left, right } => TrieNode::Binary { left, right },
+                MerkleNode::Edge { path, length, child } => {
+                    TrieNode::Edge { child, path: EdgePath { len: length as u64, value: path } }
+                }
+            })
+            .collect(),
+    }
 }
 
 impl From<MerkleNode> for super::proofs::TrieNode {
