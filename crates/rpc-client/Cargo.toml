@@ -16,4 +16,4 @@ starknet-os = { workspace = true }
 starknet-types-core = { workspace = true }
 thiserror = { workspace = true }
 tracing = { version = "0.1.38", features = [ "log" ], default-features = false }
-katana-rpc-types = { path = "/Users/glihm/cgg/dojo/crates/katana/rpc/rpc-types" }
+katana-rpc-types = { git = "https://github.com/dojoengine/dojo", branch = "katana/dev" }

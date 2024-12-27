@@ -34,7 +34,7 @@ thiserror = { workspace = true }
 tokio = { workspace = true }
 num-bigint = { workspace = true }
 tracing = { version = "0.1.38", features = [ "log" ], default-features = false }
-katana-primitives = { path = "/Users/glihm/cgg/dojo/crates/katana/primitives" }
+katana-primitives = { git = "https://github.com/dojoengine/dojo", branch = "katana/dev" }
 
 [dev-dependencies]
 rstest = { workspace = true }
