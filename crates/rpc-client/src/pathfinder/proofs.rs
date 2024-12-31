@@ -117,8 +117,8 @@ pub fn verify_proof<H: HashFunctionType>(
     commitment: Felt,
     proof: &[TrieNode],
 ) -> Result<(), ProofVerificationError> {
-    // Comment this to try verifying the proofs.
-    return Ok(());
+    // // Comment this to try verifying the proofs.
+    // return Ok(());
 
     let bits = key.to_bits_be();
 
@@ -129,11 +129,7 @@ pub fn verify_proof<H: HashFunctionType>(
     let mut index = start;
 
     for node in proof.iter() {
-        dbg!(&node);
-        dbg!(&proof);
         let node_hash = node.hash::<H>();
-        dbg!(&parent_hash);
-        dbg!(&node_hash);
         if node_hash != parent_hash {
             return Err(ProofVerificationError::InvalidChildNodeHash { node_hash, parent_hash });
         }
@@ -178,7 +174,8 @@ mod tests {
     use serde_json::json;
     use starknet::macros::felt;
 
-    use crate::pathfinder::client::katana_to_pathfinder_class_proof;
+    use super::verify_proof;
+    use crate::pathfinder::client::{katana_to_pathfinder_class_proof, katana_to_pathfinder_proof};
 
     #[test]
     fn try_and_test() {
@@ -289,5 +286,89 @@ mod tests {
         let pathfinder_proof = katana_to_pathfinder_class_proof(katana_ty);
 
         pathfinder_proof.verify(class).expect("failed to verify");
+    }
+
+    #[test]
+    fn storage_proof() {
+        let address = felt!("0x1f401c745d3dba9b9da11921d1fb006c96f571e9039a0ece3f3b0dc14f04c3d");
+        let storage_key = felt!("0x1379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f");
+
+        let json = json!({
+          "global_roots": {
+            "block_hash": "0x607578c124baf60f2746ee38c8eeae659a707865aa08b7fc8ad3615da8b7d27",
+            "classes_tree_root": "0x64de0d67f4afca0889f86042a1ceffd1835694eece8b94882c3a1f76e76beac",
+            "contracts_tree_root": "0x66fdff8b024e8e177397362bbb85b7d590561daf74cc78bd026e495ad7f65b8"
+          },
+          "classes_proof": {
+            "nodes": []
+          },
+          "contracts_proof": {
+            "nodes": [
+              {
+                "node_hash": "0x66fdff8b024e8e177397362bbb85b7d590561daf74cc78bd026e495ad7f65b8",
+                "node": {
+                  "left": "0x3af57825237ee80adad2acdd2b2c868af79f561dcfca653d194ea02042c3240",
+                  "right": "0x18c1253d675f20733ab9da1e815758cf660b1a7ea93e035eed508df3aeec98c"
+                }
+              },
+              {
+                "node_hash": "0x3af57825237ee80adad2acdd2b2c868af79f561dcfca653d194ea02042c3240",
+                "node": {
+                  "left": "0x2e05297cb4ba5b548fa7312948e8a5547edbf5016a10fa293dedb3fa2d18534",
+                  "right": "0x7aec3a4287c106f65b0f4b1bed2e44a95f8155af3ba031ab1f2c901719ffa45"
+                }
+              },
+              {
+                "node_hash": "0x2e05297cb4ba5b548fa7312948e8a5547edbf5016a10fa293dedb3fa2d18534",
+                "node": {
+                  "path": "0x1",
+                  "length": 1,
+                  "child": "0x69881d08e90ac3b322164f6be03f3db125a732f8696e7a2fa3c77053cc656da"
+                }
+              },
+              {
+                "node_hash": "0x69881d08e90ac3b322164f6be03f3db125a732f8696e7a2fa3c77053cc656da",
+                "node": {
+                  "left": "0x1047636f59a5eac93c4aeda2f53708e59f101e2866f0ccb8252f78089f6d11d",
+                  "right": "0x771820c189bc2f5bc70c38b55af6de985dc79ecda72998301dcf8d8908e58b0"
+                }
+              },
+              {
+                "node_hash": "0x771820c189bc2f5bc70c38b55af6de985dc79ecda72998301dcf8d8908e58b0",
+                "node": {
+                  "path": "0x7401c745d3dba9b9da11921d1fb006c96f571e9039a0ece3f3b0dc14f04c3d",
+                  "length": 247,
+                  "child": "0x113158def2a70808cb0b9df6b77fbe43a66b83dac588bab3eb4df7ab946b6d"
+                }
+              }
+            ],
+            "contract_leaves_data": [
+              {
+                "storage_root": "0x47de68226066999185a8a4299215bfedf45a20ce544bc298438917fc16949a4",
+                "nonce": "0x0",
+                "class_hash": "0x7dc7899aa655b0aae51eadff6d801a58e97dd99cf4666ee59e704249e51adf2"
+              }
+            ]
+          },
+          "contracts_storage_proofs": {
+            "nodes": [
+              [
+                {
+                  "node_hash": "0x47de68226066999185a8a4299215bfedf45a20ce544bc298438917fc16949a4",
+                  "node": {
+                    "path": "0x1379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f",
+                    "length": 251,
+                    "child": "0x78e6e3e4a50285be0f6e8d0b8a61044033e24023df6eb95979ae4073f159ae6"
+                  }
+                }
+              ]
+            ]
+          }
+        });
+
+        let katana_ty = serde_json::from_value::<GetStorageProofResponse>(json).unwrap();
+        let pathfinder_proof = katana_to_pathfinder_proof(katana_ty);
+
+        pathfinder_proof.contract_data.unwrap().verify(&[storage_key]).expect("must be able to verify");
     }
 }

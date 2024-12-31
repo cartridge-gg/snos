@@ -2403,7 +2403,7 @@ dependencies = [
 [[package]]
 name = "dojo-metrics"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#a7e119b0f30c2b8873a9461a6f8aa9d6bcfa5d26"
+source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
 dependencies = [
  "hyper 0.14.31",
  "jemalloc-ctl",
@@ -3599,7 +3599,7 @@ dependencies = [
 [[package]]
 name = "katana-cairo"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#a7e119b0f30c2b8873a9461a6f8aa9d6bcfa5d26"
+source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
 dependencies = [
  "cairo-lang-casm",
  "cairo-lang-runner",
@@ -3615,7 +3615,7 @@ dependencies = [
 [[package]]
 name = "katana-core"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#a7e119b0f30c2b8873a9461a6f8aa9d6bcfa5d26"
+source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
 dependencies = [
  "alloy-contract",
  "alloy-network",
@@ -3654,7 +3654,7 @@ dependencies = [
 [[package]]
 name = "katana-db"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#a7e119b0f30c2b8873a9461a6f8aa9d6bcfa5d26"
+source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
 dependencies = [
  "anyhow",
  "dojo-metrics",
@@ -3677,7 +3677,7 @@ dependencies = [
 [[package]]
 name = "katana-executor"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#a7e119b0f30c2b8873a9461a6f8aa9d6bcfa5d26"
+source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
 dependencies = [
  "blockifier 0.8.0-rc.3 (git+https://github.com/dojoengine/sequencer?tag=v0.8.0-rc3.2)",
  "katana-cairo",
@@ -3693,7 +3693,7 @@ dependencies = [
 [[package]]
 name = "katana-pool"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#a7e119b0f30c2b8873a9461a6f8aa9d6bcfa5d26"
+source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
 dependencies = [
  "futures",
  "katana-executor",
@@ -3708,7 +3708,7 @@ dependencies = [
 [[package]]
 name = "katana-primitives"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#a7e119b0f30c2b8873a9461a6f8aa9d6bcfa5d26"
+source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
 dependencies = [
  "alloy-primitives",
  "anyhow",
@@ -3736,7 +3736,7 @@ dependencies = [
 [[package]]
 name = "katana-provider"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#a7e119b0f30c2b8873a9461a6f8aa9d6bcfa5d26"
+source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
 dependencies = [
  "anyhow",
  "auto_impl",
@@ -3757,7 +3757,7 @@ dependencies = [
 [[package]]
 name = "katana-rpc-types"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#a7e119b0f30c2b8873a9461a6f8aa9d6bcfa5d26"
+source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
 dependencies = [
  "alloy-primitives",
  "anyhow",
@@ -3785,7 +3785,7 @@ dependencies = [
 [[package]]
 name = "katana-tasks"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#a7e119b0f30c2b8873a9461a6f8aa9d6bcfa5d26"
+source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
 dependencies = [
  "futures",
  "rayon",
@@ -3799,7 +3799,7 @@ dependencies = [
 [[package]]
 name = "katana-trie"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#a7e119b0f30c2b8873a9461a6f8aa9d6bcfa5d26"
+source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
 dependencies = [
  "anyhow",
  "bitvec",
