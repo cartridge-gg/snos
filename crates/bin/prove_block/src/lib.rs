@@ -77,10 +77,12 @@ fn compute_class_commitment(
     updated_root: Felt,
 ) -> CommitmentInfo {
     for (class_hash, previous_class_proof) in previous_class_proofs {
+        dbg!(class_hash);
+        println!("{previous_class_proof:#?}");
         if let Err(e) = previous_class_proof.verify(*class_hash) {
             match e {
                 ProofVerificationError::NonExistenceProof { .. } => {}
-                _ => panic!("Previous class proof verification failed"),
+                e => panic!("Previous class proof verification failed: {e}"),
             }
         }
     }

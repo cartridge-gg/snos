@@ -35,7 +35,7 @@ async fn fetch_storage_proof_for_contract(
         let mut chunked_storage_proofs = Vec::new();
         for keys_chunk in keys.chunks(MAX_KEYS) {
             chunked_storage_proofs
-                .push(rpc_client.pathfinder_rpc().get_proof(block_number, contract_address, keys_chunk).await?);
+                .push(rpc_client.pathfinder_rpc().get_proof(block_number, contract_address, dbg!(keys_chunk)).await?);
         }
         merge_storage_proofs(chunked_storage_proofs)
     };

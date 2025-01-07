@@ -2403,7 +2403,7 @@ dependencies = [
 [[package]]
 name = "dojo-metrics"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
+source = "git+https://github.com/dojoengine/dojo#23614ea54bdbd4c89dc4c97220ac2af9d76ffb6a"
 dependencies = [
  "hyper 0.14.31",
  "jemalloc-ctl",
@@ -3613,9 +3613,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "katana-cairo"
+version = "1.0.9"
+source = "git+https://github.com/dojoengine/dojo#23614ea54bdbd4c89dc4c97220ac2af9d76ffb6a"
+dependencies = [
+ "cairo-lang-casm",
+ "cairo-lang-runner",
+ "cairo-lang-sierra",
+ "cairo-lang-sierra-to-casm",
+ "cairo-lang-starknet",
+ "cairo-lang-starknet-classes",
+ "cairo-lang-utils",
+ "cairo-vm 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "starknet_api 0.13.0-rc.1 (git+https://github.com/dojoengine/sequencer?tag=v0.8.0-rc3.2)",
+]
+
+[[package]]
 name = "katana-core"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
+source = "git+https://github.com/dojoengine/dojo#23614ea54bdbd4c89dc4c97220ac2af9d76ffb6a"
 dependencies = [
  "alloy-contract",
  "alloy-network",
@@ -3632,7 +3648,7 @@ dependencies = [
  "katana-db",
  "katana-executor",
  "katana-pool",
- "katana-primitives",
+ "katana-primitives 1.0.9 (git+https://github.com/dojoengine/dojo)",
  "katana-provider",
  "katana-tasks",
  "katana-trie",
@@ -3654,11 +3670,11 @@ dependencies = [
 [[package]]
 name = "katana-db"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
+source = "git+https://github.com/dojoengine/dojo#23614ea54bdbd4c89dc4c97220ac2af9d76ffb6a"
 dependencies = [
  "anyhow",
  "dojo-metrics",
- "katana-primitives",
+ "katana-primitives 1.0.9 (git+https://github.com/dojoengine/dojo)",
  "katana-trie",
  "metrics 0.23.0",
  "page_size",
@@ -3677,11 +3693,11 @@ dependencies = [
 [[package]]
 name = "katana-executor"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
+source = "git+https://github.com/dojoengine/dojo#23614ea54bdbd4c89dc4c97220ac2af9d76ffb6a"
 dependencies = [
  "blockifier 0.8.0-rc.3 (git+https://github.com/dojoengine/sequencer?tag=v0.8.0-rc3.2)",
- "katana-cairo",
- "katana-primitives",
+ "katana-cairo 1.0.9 (git+https://github.com/dojoengine/dojo)",
+ "katana-primitives 1.0.9 (git+https://github.com/dojoengine/dojo)",
  "katana-provider",
  "katana-trie",
  "parking_lot",
@@ -3693,11 +3709,11 @@ dependencies = [
 [[package]]
 name = "katana-pool"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
+source = "git+https://github.com/dojoengine/dojo#23614ea54bdbd4c89dc4c97220ac2af9d76ffb6a"
 dependencies = [
  "futures",
  "katana-executor",
- "katana-primitives",
+ "katana-primitives 1.0.9 (git+https://github.com/dojoengine/dojo)",
  "katana-provider",
  "parking_lot",
  "thiserror 1.0.65",
@@ -3712,11 +3728,38 @@ source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5
 dependencies = [
  "alloy-primitives",
  "anyhow",
+ "base64 0.21.7",
+ "derive_more 0.99.18",
+ "flate2",
+ "katana-cairo 1.0.9 (git+https://github.com/dojoengine/dojo?branch=katana%2Fdev)",
+ "lazy_static",
+ "num-bigint",
+ "num-traits 0.2.19",
+ "rand",
+ "serde",
+ "serde_json",
+ "serde_json_pythonic",
+ "serde_with",
+ "starknet",
+ "starknet-crypto 0.7.2",
+ "starknet-types-core",
+ "strum 0.25.0",
+ "strum_macros 0.25.3",
+ "thiserror 1.0.65",
+]
+
+[[package]]
+name = "katana-primitives"
+version = "1.0.9"
+source = "git+https://github.com/dojoengine/dojo#23614ea54bdbd4c89dc4c97220ac2af9d76ffb6a"
+dependencies = [
+ "alloy-primitives",
+ "anyhow",
  "arbitrary",
  "base64 0.21.7",
  "derive_more 0.99.18",
  "flate2",
- "katana-cairo",
+ "katana-cairo 1.0.9 (git+https://github.com/dojoengine/dojo)",
  "lazy_static",
  "num-bigint",
  "num-traits 0.2.19",
@@ -3736,14 +3779,14 @@ dependencies = [
 [[package]]
 name = "katana-provider"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
+source = "git+https://github.com/dojoengine/dojo#23614ea54bdbd4c89dc4c97220ac2af9d76ffb6a"
 dependencies = [
  "anyhow",
  "auto_impl",
  "bitvec",
  "futures",
  "katana-db",
- "katana-primitives",
+ "katana-primitives 1.0.9 (git+https://github.com/dojoengine/dojo)",
  "katana-trie",
  "parking_lot",
  "serde_json",
@@ -3757,7 +3800,7 @@ dependencies = [
 [[package]]
 name = "katana-rpc-types"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
+source = "git+https://github.com/dojoengine/dojo#23614ea54bdbd4c89dc4c97220ac2af9d76ffb6a"
 dependencies = [
  "alloy-primitives",
  "anyhow",
@@ -3765,11 +3808,11 @@ dependencies = [
  "flate2",
  "futures",
  "jsonrpsee",
- "katana-cairo",
+ "katana-cairo 1.0.9 (git+https://github.com/dojoengine/dojo)",
  "katana-core",
  "katana-executor",
  "katana-pool",
- "katana-primitives",
+ "katana-primitives 1.0.9 (git+https://github.com/dojoengine/dojo)",
  "katana-provider",
  "katana-trie",
  "num-traits 0.2.19",
@@ -3785,7 +3828,7 @@ dependencies = [
 [[package]]
 name = "katana-tasks"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
+source = "git+https://github.com/dojoengine/dojo#23614ea54bdbd4c89dc4c97220ac2af9d76ffb6a"
 dependencies = [
  "futures",
  "rayon",
@@ -3799,12 +3842,12 @@ dependencies = [
 [[package]]
 name = "katana-trie"
 version = "1.0.9"
-source = "git+https://github.com/dojoengine/dojo?branch=katana%2Fdev#cf5e11b8bd5471bc6ac02b6cb0ee90297bca130e"
+source = "git+https://github.com/dojoengine/dojo#23614ea54bdbd4c89dc4c97220ac2af9d76ffb6a"
 dependencies = [
  "anyhow",
  "bitvec",
  "bonsai-trie",
- "katana-primitives",
+ "katana-primitives 1.0.9 (git+https://github.com/dojoengine/dojo)",
  "serde",
  "slab",
  "starknet",
@@ -4947,7 +4990,7 @@ dependencies = [
  "clap",
  "env_logger",
  "futures-core",
- "katana-primitives",
+ "katana-primitives 1.0.9 (git+https://github.com/dojoengine/dojo?branch=katana%2Fdev)",
  "log",
  "num-bigint",
  "pathfinder-common",

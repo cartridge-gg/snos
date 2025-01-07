@@ -1,11 +1,13 @@
 use serde::Deserialize;
 use starknet_os::config::DEFAULT_STORAGE_TREE_HEIGHT;
 use starknet_os::crypto::pedersen::PedersenHash;
+use starknet_os::crypto::poseidon::PoseidonHash;
 use starknet_os::starkware_utils::commitment_tree::base_types::{Height, Length, NodePath};
 use starknet_os::starkware_utils::commitment_tree::patricia_tree::nodes::{BinaryNodeFact, EdgeNodeFact};
 use starknet_os::storage::dict_storage::DictStorage;
 use starknet_os::storage::storage::{Fact, HashFunctionType};
 use starknet_types_core::felt::Felt;
+use starknet_types_core::hash::Poseidon;
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub enum TrieNode {
@@ -99,7 +101,7 @@ pub struct PathfinderClassProof {
 impl PathfinderClassProof {
     /// Verifies that the class proof is valid.
     pub fn verify(&self, class_hash: Felt) -> Result<(), ProofVerificationError> {
-        verify_proof::<PedersenHash>(class_hash, self.class_commitment, &self.class_proof)
+        verify_proof::<PoseidonHash>(class_hash, self.class_commitment, &self.class_proof)
     }
 }
 
@@ -128,7 +130,9 @@ pub fn verify_proof<H: HashFunctionType>(
     let start = 5;
     let mut index = start;
 
-    for node in proof.iter() {
+    for (i, node) in proof.iter().enumerate() {
+        dbg!(i);
+
         let node_hash = node.hash::<H>();
         if node_hash != parent_hash {
             return Err(ProofVerificationError::InvalidChildNodeHash { node_hash, parent_hash });

@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use katana_rpc_types::trie::{GetStorageProofResponse, MerkleNode, NodeWithHash};
 use reqwest::{Response, StatusCode};
 use serde::de::DeserializeOwned;
@@ -78,40 +80,56 @@ impl PathfinderRpcClient {
         contract_address: Felt,
         keys: &[Felt],
     ) -> Result<PathfinderProof, ClientError> {
-        let mut proofs = vec![];
-        for key in keys {
-            proofs.push(self.get_proof_one_key(block_number, contract_address, *key).await?);
-        }
+        let mut proofs = VecDeque::new();
 
-        let mut storage_proofs = vec![];
-        for p in proofs.iter() {
-            if let Some(data) = p.contract_data.as_ref() {
-                storage_proofs.push(data.storage_proofs[0].clone());
+        if keys.is_empty() {
+            let proof = self.get_proof_one_key(block_number, contract_address, None).await?;
+            proofs.push_back(proof);
+        } else {
+            for key in keys {
+                let proof = self.get_proof_one_key(block_number, contract_address, Some(*key)).await?;
+                proofs.push_back(proof);
             }
         }
 
-        let mut p0 = proofs[0].clone();
-        if let Some(data) = p0.contract_data.as_mut() {
-            data.storage_proofs = storage_proofs;
+        let mut the_ultimate_proof = proofs.pop_front().expect("must have at least one");
+        let the_utimate_contract_data = the_ultimate_proof.contract_data.as_mut().expect("must have bruh");
+
+        for proof in proofs {
+            the_utimate_contract_data.storage_proofs.push(proof.contract_data.unwrap().storage_proofs[0].clone());
         }
+
+        // let mut storage_proofs = vec![];
+        // for p in proofs.iter() {
+        //     if let Some(data) = p.contract_data.as_ref() {
+        //         storage_proofs.push(data.storage_proofs[0].clone());
+        //     }
+        // }
+
+        // let mut p0 = proofs[0].clone();
+        // if let Some(data) = p0.contract_data.as_mut() {
+        //     data.storage_proofs = storage_proofs;
+        // }
 
         // dbg!(&p0);
 
-        Ok(p0)
+        Ok(the_ultimate_proof)
     }
 
     async fn get_proof_one_key(
         &self,
         block_number: u64,
         contract_address: Felt,
-        key: Felt,
+        key: Option<Felt>,
     ) -> Result<PathfinderProof, ClientError> {
+        let key = if let Some(key) = key { vec![key] } else { vec![] };
+
         let json = json!({
             "block_id": { "block_number": block_number },
             "contract_addresses": [contract_address],
             "contracts_storage_keys": [{
                 "contract_address": contract_address,
-                "storage_keys": [key]
+                "storage_keys": key
             }]
         });
 
@@ -124,8 +142,6 @@ impl PathfinderRpcClient {
         );
         let r: Result<GetStorageProofResponse, ClientError> =
             post_jsonrpc_request(&self.http_client, &self.rpc_base_url, "starknet_getStorageProof", json).await;
-
-        // dbg!("KATANA", &r);
 
         Ok(katana_to_pathfinder_proof(r?))
     }
@@ -163,11 +179,15 @@ pub(crate) fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> Path
     ]);
 
     // convert storage proofs to pathfinder types
-    let mut pf_storage_proof: Vec<TrieNode> = Vec::with_capacity(storage_proofs.len());
+    let mut pf_storage_proofs = Vec::with_capacity(1);
+    let mut pf_storage_proof: Vec<TrieNode> = Vec::with_capacity(pf_storage_proofs.len());
+
     for n in &storage_proofs.0 {
         let NodeWithHash { node, .. } = n;
         pf_storage_proof.push(node.clone().into());
     }
+
+    pf_storage_proofs.push(pf_storage_proof);
 
     // convert contract proofs to pathfinder types
     let mut pf_contract_proof: Vec<TrieNode> = Vec::with_capacity(contract_proof.nodes.len());
@@ -178,9 +198,9 @@ pub(crate) fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> Path
 
     PathfinderProof {
         state_commitment,
-        class_commitment: None,
+        class_commitment: Some(proof.global_roots.classes_tree_root),
         contract_proof: pf_contract_proof,
-        contract_data: Some(ContractData { root: contract_leaf.storage_root, storage_proofs: vec![pf_storage_proof] }),
+        contract_data: Some(ContractData { root: contract_leaf.storage_root, storage_proofs: pf_storage_proofs }),
     }
 }
 

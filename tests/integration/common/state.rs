@@ -100,7 +100,7 @@ pub struct DeployedDeprecatedContract {
 pub fn init_logging() {
     env_logger::builder()
         .is_test(true)
-        .filter_level(log::LevelFilter::Debug)
+        .filter_level(log::LevelFilter::Info)
         .format_timestamp(None)
         .try_init()
         .expect("Failed to configure env_logger");

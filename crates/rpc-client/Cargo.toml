@@ -15,5 +15,5 @@ starknet-crypto = { workspace = true }
 starknet-os = { workspace = true }
 starknet-types-core = { workspace = true }
 thiserror = { workspace = true }
-tracing = { version = "0.1.38", features = [ "log" ], default-features = false }
-katana-rpc-types = { git = "https://github.com/dojoengine/dojo", branch = "katana/dev" }
+tracing = { version = "0.1.38", features = ["log"], default-features = false }
+katana-rpc-types = { git = "https://github.com/dojoengine/dojo" }
