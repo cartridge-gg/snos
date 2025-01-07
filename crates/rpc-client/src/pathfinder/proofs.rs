@@ -70,8 +70,12 @@ impl ContractData {
     pub fn verify(&self, storage_keys: &[Felt]) -> Result<(), Vec<ProofVerificationError>> {
         let mut errors = vec![];
 
+        dbg!(&self.root);
+        dbg!(&self.storage_proofs);
+
         for (index, storage_key) in storage_keys.iter().enumerate() {
-            if let Err(e) = verify_proof::<PedersenHash>(*storage_key, self.root, &self.storage_proofs[index]) {
+            // With the new endpoint, we always have one single proof.
+            if let Err(e) = verify_proof::<PedersenHash>(*storage_key, self.root, &self.storage_proofs[0]) {
                 errors.push(e);
             }
         }
@@ -112,6 +116,7 @@ pub fn verify_proof<H: HashFunctionType>(
     let bits = key.to_bits_be();
 
     let mut parent_hash = commitment;
+    dbg!(&parent_hash);
 
     // The tree height is 251, so the first 5 bits are ignored.
     let start = 5;
