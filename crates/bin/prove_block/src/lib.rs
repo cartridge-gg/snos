@@ -313,16 +313,11 @@ pub async fn prove_block(
     let updated_root = block_hash_storage_proof.class_commitment.unwrap_or(Felt::ZERO);
     let previous_root = previous_block_hash_storage_proof.class_commitment.unwrap_or(Felt::ZERO);
 
-    let previous_contract_trie_root = if previous_root == Felt::ZERO {
-        Felt::ZERO
-    } else {
-        previous_block_hash_storage_proof.contract_proof[0].hash::<PedersenHash>()
-    };
-    let current_contract_trie_root = if updated_root == Felt::ZERO {
-        Felt::ZERO
-    } else {
-        block_hash_storage_proof.contract_proof[0].hash::<PedersenHash>()
-    };
+    let previous_contract_trie_root =
+        if previous_root == Felt::ZERO { Felt::ZERO } else { previous_block_hash_storage_proof.contract_commitment };
+
+    let current_contract_trie_root =
+        if updated_root == Felt::ZERO { Felt::ZERO } else { block_hash_storage_proof.contract_commitment };
 
     let previous_contract_proofs: Vec<_> =
         previous_storage_proofs.values().map(|proof| proof.contract_proof.clone()).collect();

@@ -35,7 +35,7 @@ async fn fetch_storage_proof_for_contract(
         let mut chunked_storage_proofs = Vec::new();
         for keys_chunk in keys.chunks(MAX_KEYS) {
             chunked_storage_proofs
-                .push(rpc_client.pathfinder_rpc().get_proof(block_number, contract_address, dbg!(keys_chunk)).await?);
+                .push(rpc_client.pathfinder_rpc().get_proof(block_number, contract_address, keys_chunk).await?);
         }
         merge_storage_proofs(chunked_storage_proofs)
     };
@@ -170,6 +170,7 @@ fn get_key_following_edge(key: Felt, height: Height, edge_path: &EdgePath) -> Fe
 
 fn merge_storage_proofs(proofs: Vec<PathfinderProof>) -> PathfinderProof {
     let class_commitment = proofs[0].class_commitment;
+    let contract_commitment = proofs[0].contract_commitment;
     let state_commitment = proofs[0].state_commitment;
     let contract_proof = proofs[0].contract_proof.clone();
 
@@ -189,7 +190,7 @@ fn merge_storage_proofs(proofs: Vec<PathfinderProof>) -> PathfinderProof {
         contract_data
     };
 
-    PathfinderProof { class_commitment, state_commitment, contract_proof, contract_data }
+    PathfinderProof { class_commitment, contract_commitment, state_commitment, contract_proof, contract_data }
 }
 
 pub(crate) async fn get_class_proofs(

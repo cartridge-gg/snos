@@ -74,18 +74,14 @@ impl ContractData {
             }
         }
 
-        if errors.is_empty() {
-            dbg!("OK");
-            Ok(())
-        } else {
-            Err(errors)
-        }
+        if errors.is_empty() { Ok(()) } else { Err(errors) }
     }
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct PathfinderProof {
     pub state_commitment: Felt,
+    pub contract_commitment: Felt,
     pub class_commitment: Option<Felt>,
     pub contract_proof: Vec<TrieNode>,
     pub contract_data: Option<ContractData>,
@@ -130,9 +126,7 @@ pub fn verify_proof<H: HashFunctionType>(
     let start = 5;
     let mut index = start;
 
-    for (i, node) in proof.iter().enumerate() {
-        dbg!(i);
-
+    for node in proof.iter() {
         let node_hash = node.hash::<H>();
         if node_hash != parent_hash {
             return Err(ProofVerificationError::InvalidChildNodeHash { node_hash, parent_hash });

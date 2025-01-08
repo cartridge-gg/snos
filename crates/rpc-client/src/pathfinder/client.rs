@@ -197,6 +197,7 @@ pub(crate) fn katana_to_pathfinder_proof(proof: GetStorageProofResponse) -> Path
     }
 
     PathfinderProof {
+        contract_commitment: proof.global_roots.contracts_tree_root,
         state_commitment,
         class_commitment: Some(proof.global_roots.classes_tree_root),
         contract_proof: pf_contract_proof,
