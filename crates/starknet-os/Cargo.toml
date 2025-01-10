@@ -43,6 +43,7 @@ serde_yaml = { workspace = true }
 sha2 = { workspace = true }
 starknet_api = { workspace = true }
 starknet-crypto = { workspace = true }
+starknet-types-core = { workspace = true }
 starknet-os-types = { path = "../starknet-os-types" }
 thiserror = { workspace = true }
 tokio = { workspace = true }

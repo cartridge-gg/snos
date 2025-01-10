@@ -70,10 +70,10 @@ sha2 = "0.10.8"
 starknet = "0.11.0"
 starknet_api = { git = "https://github.com/Moonsong-Labs/sequencer", rev = "6624e910c57db9a16f1607c1ed26f7d8f1114e73", features = ["testing"] }
 starknet-core = "0.11.1"
-starknet-crypto = "0.6.2"
+starknet-crypto = "0.7.3"
 starknet-os = { path = "crates/starknet-os" }
 starknet-os-types = { path = "crates/starknet-os-types" }
-starknet-types-core = "0.1.5"
+starknet-types-core = { version = "0.1.7", features = ["arbitrary", "hash"] }
 thiserror = "1.0.48"
 tokio = { version = "1.37.0", features = ["rt-multi-thread"] }
 uuid = { version = "1.4.0", features = ["v4", "serde"] }
