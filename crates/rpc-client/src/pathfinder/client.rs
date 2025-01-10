@@ -5,7 +5,7 @@ use reqwest::{Response, StatusCode};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde_json::json;
-use starknet::macros::{felt, short_string};
+use starknet::macros::short_string;
 use starknet_types_core::felt::Felt;
 
 use super::proofs::EdgePath;
@@ -98,20 +98,6 @@ impl PathfinderRpcClient {
         for proof in proofs {
             the_utimate_contract_data.storage_proofs.push(proof.contract_data.unwrap().storage_proofs[0].clone());
         }
-
-        // let mut storage_proofs = vec![];
-        // for p in proofs.iter() {
-        //     if let Some(data) = p.contract_data.as_ref() {
-        //         storage_proofs.push(data.storage_proofs[0].clone());
-        //     }
-        // }
-
-        // let mut p0 = proofs[0].clone();
-        // if let Some(data) = p0.contract_data.as_mut() {
-        //     data.storage_proofs = storage_proofs;
-        // }
-
-        // dbg!(&p0);
 
         Ok(the_ultimate_proof)
     }

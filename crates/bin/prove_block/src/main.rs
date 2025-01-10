@@ -17,7 +17,7 @@ struct Args {
 
 fn init_logging() {
     env_logger::builder()
-        .filter_level(log::LevelFilter::Debug)
+        .filter_level(log::LevelFilter::Warn)
         .format_timestamp(None)
         .try_init()
         .expect("Failed to configure env_logger");

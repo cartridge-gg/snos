@@ -7,7 +7,6 @@ use starknet_os::starkware_utils::commitment_tree::patricia_tree::nodes::{Binary
 use starknet_os::storage::dict_storage::DictStorage;
 use starknet_os::storage::storage::{Fact, HashFunctionType};
 use starknet_types_core::felt::Felt;
-use starknet_types_core::hash::Poseidon;
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub enum TrieNode {
