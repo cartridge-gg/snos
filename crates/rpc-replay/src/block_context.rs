@@ -62,7 +62,7 @@ pub fn build_block_context(
         },
     };
 
-    let versioned_constants = VersionedConstants::get(starknet_version);
+    let versioned_constants = VersionedConstants::latest_constants();
     let bouncer_config = BouncerConfig::max();
 
     Ok(BlockContext::new(block_info, chain_info, versioned_constants.clone(), bouncer_config))
