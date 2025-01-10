@@ -23,7 +23,7 @@ use starknet_api::transaction::{
     ResourceBoundsMapping, TransactionHash,
 };
 use starknet_api::{contract_address, felt, patricia_key};
-use starknet_crypto::{pedersen_hash, FieldElement};
+use starknet_crypto::{pedersen_hash, Felt};
 use starknet_os::config::{BLOCK_HASH_CONTRACT_ADDRESS, STORED_BLOCK_HASH_BUFFER};
 use starknet_os::crypto::pedersen::PedersenHash;
 use starknet_os::crypto::poseidon::poseidon_hash_many_bytes;
@@ -148,7 +148,7 @@ fn poseidon_hash_on_elements(data: &[Felt252]) -> Felt252 {
 pub fn hash(a: &Felt252, b: &Felt252) -> Felt252 {
     let a_be_bytes = a.to_bytes_be();
     let b_be_bytes = b.to_bytes_be();
-    let (x, y) = (FieldElement::from_bytes_be(&a_be_bytes).unwrap(), FieldElement::from_bytes_be(&b_be_bytes).unwrap());
+    let (x, y) = (Felt::from_bytes_be(&a_be_bytes), Felt::from_bytes_be(&b_be_bytes));
 
     let result = pedersen_hash(&x, &y);
     Felt252::from_bytes_be(&result.to_bytes_be())
