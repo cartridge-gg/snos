@@ -149,7 +149,7 @@ pub async fn prove_block(
     // This is a workaorund to catch the case where the block number is less than the buffer and still preserve the check
     // The OS will also handle the case where the block number is less than the buffer.
     let older_block_number =
-        if block_number <= STORED_BLOCK_HASH_BUFFER { 1 } else { block_number - STORED_BLOCK_HASH_BUFFER };
+        if block_number <= STORED_BLOCK_HASH_BUFFER { 0 } else { block_number - STORED_BLOCK_HASH_BUFFER };
 
     let older_block =
         match rpc_client.starknet_rpc().get_block_with_tx_hashes(BlockId::Number(older_block_number)).await? {
@@ -295,13 +295,6 @@ pub async fn prove_block(
             (class_hash.0, visited_pcs.iter().copied().map(Felt252::from).collect::<Vec<_>>())
         })
         .collect();
-
-    // // We can extract data from any storage proof, use the one of the block hash contract
-    // let block_hash_storage_proof =
-    //     storage_proofs.get(&Felt::ONE).expect("there should be a storage proof for the block hash contract");
-    // let previous_block_hash_storage_proof = previous_storage_proofs
-    //     .get(&Felt::ONE)
-    //     .expect("there should be a previous storage proof for the block hash contract");
 
     // we're assuming there's always at least one storage proof in the list
     let (.., prev_proofs) = previous_storage_proofs.iter().next().expect("there should be at least one storage proof");
