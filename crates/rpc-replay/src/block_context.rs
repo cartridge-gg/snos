@@ -27,7 +27,7 @@ fn felt_to_gas_price(price: &Felt) -> Result<NonZeroU128, FeltConversionError> {
 pub fn build_block_context(
     chain_id: ChainId,
     block: &BlockWithTxs,
-    starknet_version: blockifier::versioned_constants::StarknetVersion,
+    _: blockifier::versioned_constants::StarknetVersion,
 ) -> Result<BlockContext, FeltConversionError> {
     let sequencer_address_hex = block.sequencer_address.to_hex_string();
     let sequencer_address = contract_address!(sequencer_address_hex.as_str());
@@ -62,7 +62,8 @@ pub fn build_block_context(
         },
     };
 
-    let versioned_constants = VersionedConstants::get(starknet_version);
+    // @kariy: We use the latest versioned constants to match what Katana is using.
+    let versioned_constants = VersionedConstants::latest_constants();
     let bouncer_config = BouncerConfig::max();
 
     Ok(BlockContext::new(block_info, chain_info, versioned_constants.clone(), bouncer_config))
