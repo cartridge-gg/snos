@@ -203,6 +203,7 @@ fn get_key_following_edge(key: Felt, height: Height, edge_path: &EdgePath) -> Fe
 
 fn merge_storage_proofs(proofs: Vec<PathfinderProof>) -> PathfinderProof {
     let class_commitment = proofs[0].class_commitment;
+    let contract_commitment = proofs[0].contract_commitment;
     let state_commitment = proofs[0].state_commitment;
     let contract_proof = proofs[0].contract_proof.clone();
 
@@ -222,7 +223,7 @@ fn merge_storage_proofs(proofs: Vec<PathfinderProof>) -> PathfinderProof {
         contract_data
     };
 
-    PathfinderProof { class_commitment, state_commitment, contract_proof, contract_data }
+    PathfinderProof { contract_commitment, class_commitment, state_commitment, contract_proof, contract_data }
 }
 
 pub(crate) async fn get_class_proofs(
