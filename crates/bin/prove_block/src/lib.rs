@@ -295,26 +295,23 @@ pub async fn prove_block(
         })
         .collect();
 
-    // We can extract data from any storage proof, use the one of the block hash contract
-    let block_hash_storage_proof =
-        storage_proofs.get(&Felt::ONE).expect("there should be a storage proof for the block hash contract");
-    let previous_block_hash_storage_proof = previous_storage_proofs
-        .get(&Felt::ONE)
-        .expect("there should be a previous storage proof for the block hash contract");
+    // we're assuming there's always at least one storage proof in the list
+    let (.., prev_proofs) = previous_storage_proofs.iter().next().expect("there should be at least one storage proof");
+    let (.., new_proofs) = storage_proofs.iter().next().expect("there should be at least one storage proof");
 
     // The root of the class commitment tree for previous and current block
     // Using requested storage proof instead of getting them from class proofs
     // If the block doesn't contain transactions, `class_proofs` will be empty
     // Pathfinder will send a None on class_commitment when the tree is not initialized, ie, root is zero
-    let updated_root = block_hash_storage_proof.class_commitment.unwrap_or(Felt::ZERO);
-    let previous_root = previous_block_hash_storage_proof.class_commitment.unwrap_or(Felt::ZERO);
+    let previous_root = prev_proofs.class_commitment.unwrap_or(Felt::ZERO);
+    let updated_root = new_proofs.class_commitment.unwrap_or(Felt::ZERO);
 
     // On devnet and until block 10, the storage_root_idx might be None and that means that contract_proof is empty
-    let previous_contract_trie_root = match previous_block_hash_storage_proof.contract_proof.first() {
+    let previous_contract_trie_root = match prev_proofs.contract_proof.first() {
         Some(proof) => proof.hash::<PedersenHash>(),
         None => Felt252::ZERO,
     };
-    let current_contract_trie_root = match block_hash_storage_proof.contract_proof.first() {
+    let current_contract_trie_root = match new_proofs.contract_proof.first() {
         Some(proof) => proof.hash::<PedersenHash>(),
         None => Felt252::ZERO,
     };
