@@ -30,7 +30,7 @@ pub struct FormattedStateUpdate {
 /// - Consolidates that information into a `FormattedStateUpdate`.
 pub(crate) async fn get_formatted_state_update(
     rpc_client: &RpcClient,
-    previous_block_id: BlockId,
+    previous_block_id: Option<BlockId>,
     block_id: BlockId,
 ) -> Result<(FormattedStateUpdate, Vec<TransactionTraceWithHash>), ProveBlockError> {
     let state_update =
@@ -166,7 +166,7 @@ fn add_compiled_class_to_os_input(
 /// the `class_hash_to_compiled_class_hash` map is updated with new entries.
 async fn build_compiled_class_and_maybe_update_class_hash_to_compiled_class_hash(
     provider: &RpcClient,
-    previous_block_id: BlockId,
+    previous_block_id: Option<BlockId>,
     block_id: BlockId,
     accessed_addresses: &HashSet<Felt252>,
     declared_classes: &HashSet<Felt252>,
@@ -184,28 +184,29 @@ async fn build_compiled_class_and_maybe_update_class_hash_to_compiled_class_hash
     let mut deprecated_compiled_contract_classes: HashMap<Felt252, GenericDeprecatedCompiledClass> = HashMap::new();
 
     for contract_address in accessed_addresses {
-        // In case there is a class change, we need to get the compiled class for
-        // the block to prove and for the previous block as they may differ.
-        // Note that we must also consider the case where the contract was deployed in the current
-        // block, so we can ignore "ContractNotFound" failures.
-        if let Err(e) = add_compiled_class_from_contract_to_os_input(
-            provider,
-            *contract_address,
-            previous_block_id,
-            class_hash_to_compiled_class_hash,
-            &mut compiled_contract_classes,
-            &mut deprecated_compiled_contract_classes,
-        )
-        .await
-        {
-            match e {
-                ProveBlockError::RpcError(ProviderError::StarknetError(StarknetError::ContractNotFound)) => {
-                    // The contract was deployed in the current block, nothing to worry about
+        if let Some(prev_id) = previous_block_id {
+            // In case there is a class change, we need to get the compiled class for
+            // the block to prove and for the previous block as they may differ.
+            // Note that we must also consider the case where the contract was deployed in the current
+            // block, so we can ignore "ContractNotFound" failures.
+            if let Err(e) = add_compiled_class_from_contract_to_os_input(
+                provider,
+                *contract_address,
+                prev_id,
+                class_hash_to_compiled_class_hash,
+                &mut compiled_contract_classes,
+                &mut deprecated_compiled_contract_classes,
+            )
+            .await
+            {
+                match e {
+                    ProveBlockError::RpcError(ProviderError::StarknetError(StarknetError::ContractNotFound)) => {
+                        // The contract was deployed in the current block, nothing to worry about
+                    }
+                    _ => return Err(e),
                 }
-                _ => return Err(e),
             }
         }
-
         add_compiled_class_from_contract_to_os_input(
             provider,
             *contract_address,

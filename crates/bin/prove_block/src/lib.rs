@@ -8,7 +8,7 @@ use cairo_vm::vm::errors::cairo_run_errors::CairoRunError;
 use cairo_vm::vm::runners::cairo_pie::CairoPie;
 use cairo_vm::Felt252;
 use reexecute::{reexecute_transactions_with_blockifier, ProverPerContractStorage};
-use rpc_client::pathfinder::proofs::{PathfinderClassProof, ProofVerificationError};
+use rpc_client::pathfinder::proofs::{PathfinderClassProof, PathfinderProof, ProofVerificationError};
 use rpc_client::RpcClient;
 use rpc_replay::block_context::build_block_context;
 use rpc_replay::rpc_state_reader::AsyncRpcStateReader;
@@ -120,7 +120,7 @@ pub async fn prove_block(
     full_output: bool,
 ) -> Result<(CairoPie, StarknetOsOutput), ProveBlockError> {
     let block_id = BlockId::Number(block_number);
-    let previous_block_id = BlockId::Number(block_number - 1);
+    let previous_block_id = if block_number == 0 { None } else { Some(BlockId::Number(block_number - 1)) };
 
     let rpc_client = RpcClient::new(rpc_provider);
 
@@ -138,11 +138,15 @@ pub async fn prove_block(
     let starknet_version = get_starknet_version(&block_with_txs);
     log::debug!("Starknet version: {:?}", starknet_version);
 
-    let previous_block = match rpc_client.starknet_rpc().get_block_with_tx_hashes(previous_block_id).await? {
-        MaybePendingBlockWithTxHashes::Block(block_with_txs) => block_with_txs,
-        MaybePendingBlockWithTxHashes::PendingBlock(_) => {
-            panic!("Block is still pending!");
+    let previous_block_hash = if let Some(id) = previous_block_id {
+        match rpc_client.starknet_rpc().get_block_with_tx_hashes(id).await? {
+            MaybePendingBlockWithTxHashes::Block(block_with_txs) => block_with_txs.block_hash,
+            MaybePendingBlockWithTxHashes::PendingBlock(_) => {
+                panic!("Block is still pending!");
+            }
         }
+    } else {
+        Felt::ZERO
     };
 
     // We only need to get the older block number and hash. No need to fetch all the txs
@@ -170,7 +174,7 @@ pub async fn prove_block(
 
     let class_hash_to_compiled_class_hash = processed_state_update.class_hash_to_compiled_class_hash;
 
-    let blockifier_state_reader = AsyncRpcStateReader::new(rpc_client.clone(), BlockId::Number(block_number - 1));
+    let blockifier_state_reader = AsyncRpcStateReader::new(rpc_client.clone(), previous_block_id);
 
     let mut blockifier_state = CachedState::new(blockifier_state_reader);
 
@@ -189,10 +193,13 @@ pub async fn prove_block(
         .await
         .expect("Failed to fetch storage proofs");
 
-    let previous_storage_proofs =
+    let previous_storage_proofs = if previous_block_id.is_some() {
         get_storage_proofs(&rpc_client, block_number - 1, &tx_execution_infos, old_block_number)
             .await
-            .expect("Failed to fetch storage proofs");
+            .expect("Failed to fetch storage proofs")
+    } else {
+        HashMap::default()
+    };
 
     let default_general_config = StarknetGeneralConfig::default();
 
@@ -211,8 +218,9 @@ pub async fn prove_block(
 
     // TODO: remove this clone()
     for (contract_address, storage_proof) in storage_proofs.clone() {
+        let default_previous_storage_proof = PathfinderProof::default();
         let previous_storage_proof =
-            previous_storage_proofs.get(&contract_address).expect("failed to find previous storage proof");
+            previous_storage_proofs.get(&contract_address).unwrap_or(&default_previous_storage_proof);
         let contract_storage_root = previous_storage_proof
             .contract_data
             .as_ref()
@@ -240,15 +248,15 @@ pub async fn prove_block(
 
         let (previous_class_hash, previous_nonce) = if [Felt252::ZERO, Felt252::ONE].contains(&contract_address) {
             (Felt252::ZERO, Felt252::ZERO)
-        } else {
+        } else if let Some(prev_block_id) = previous_block_id {
             let previous_class_hash =
-                match rpc_client.starknet_rpc().get_class_hash_at(previous_block_id, contract_address).await {
+                match rpc_client.starknet_rpc().get_class_hash_at(prev_block_id, contract_address).await {
                     Ok(class_hash) => Ok(class_hash),
                     Err(ProviderError::StarknetError(StarknetError::ContractNotFound)) => Ok(Felt252::ZERO),
                     Err(e) => Err(e),
                 }?;
 
-            let previous_nonce = match rpc_client.starknet_rpc().get_nonce(previous_block_id, contract_address).await {
+            let previous_nonce = match rpc_client.starknet_rpc().get_nonce(prev_block_id, contract_address).await {
                 Ok(nonce) => Ok(nonce),
                 Err(ProviderError::StarknetError(StarknetError::ContractNotFound)) => Ok(Felt252::ZERO),
                 Err(e) => Err(e),
@@ -258,6 +266,8 @@ pub async fn prove_block(
             contract_address_to_class_hash.insert(contract_address, class_hash);
 
             (previous_class_hash, previous_nonce)
+        } else {
+            (Felt::ZERO, Felt::ZERO)
         };
 
         let contract_state = ContractState {
@@ -283,9 +293,14 @@ pub async fn prove_block(
     //       block, likely for contracts that are deployed in this block
     let class_proofs =
         get_class_proofs(&rpc_client, block_number, &class_hashes[..]).await.expect("Failed to fetch class proofs");
-    let previous_class_proofs = get_class_proofs(&rpc_client, block_number - 1, &class_hashes[..])
-        .await
-        .expect("Failed to fetch previous class proofs");
+
+    let previous_class_proofs = if previous_block_id.is_some() {
+        get_class_proofs(&rpc_client, block_number - 1, &class_hashes[..])
+            .await
+            .expect("Failed to fetch previous class proofs")
+    } else {
+        HashMap::default()
+    };
 
     let visited_pcs: HashMap<Felt252, Vec<Felt252>> = blockifier_state
         .visited_pcs
@@ -296,15 +311,16 @@ pub async fn prove_block(
         .collect();
 
     // we're assuming there's always at least one storage proof in the list
-    let (.., prev_proofs) = previous_storage_proofs.iter().next().expect("there should be at least one storage proof");
+    let default_previous_storage_proof = (&Felt::ZERO, &PathfinderProof::default());
+    let (.., prev_proofs) = previous_storage_proofs.iter().next().unwrap_or(default_previous_storage_proof);
     let (.., new_proofs) = storage_proofs.iter().next().expect("there should be at least one storage proof");
 
     // The root of the class commitment tree for previous and current block
     // Using requested storage proof instead of getting them from class proofs
     // If the block doesn't contain transactions, `class_proofs` will be empty
     // Pathfinder will send a None on class_commitment when the tree is not initialized, ie, root is zero
-    let previous_root = prev_proofs.class_commitment.unwrap_or(Felt::ZERO);
-    let updated_root = new_proofs.class_commitment.unwrap_or(Felt::ZERO);
+    let previous_classes_tree_root = prev_proofs.class_commitment.unwrap_or(Felt::ZERO);
+    let updated_classes_tree_root = new_proofs.class_commitment.unwrap_or(Felt::ZERO);
 
     // On devnet and until block 10, the storage_root_idx might be None and that means that contract_proof is empty
     let previous_contract_trie_root = match prev_proofs.contract_proof.first() {
@@ -332,8 +348,12 @@ pub async fn prove_block(
         commitment_facts: global_state_commitment_facts,
     };
 
-    let contract_class_commitment_info =
-        compute_class_commitment(&previous_class_proofs, &class_proofs, previous_root, updated_root);
+    let contract_class_commitment_info = compute_class_commitment(
+        &previous_class_proofs,
+        &class_proofs,
+        previous_classes_tree_root,
+        updated_classes_tree_root,
+    );
 
     let os_input = Rc::new(StarknetOsInput {
         contract_state_commitment_info,
@@ -348,9 +368,10 @@ pub async fn prove_block(
         transactions,
         declared_class_hash_to_component_hashes: declared_class_hash_component_hashes,
         new_block_hash: block_with_txs.block_hash,
-        prev_block_hash: previous_block.block_hash,
+        prev_block_hash: previous_block_hash,
         full_output,
     });
+
     let execution_helper = ExecutionHelperWrapper::<ProverPerContractStorage>::new(
         contract_storages,
         tx_execution_infos,

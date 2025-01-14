@@ -73,7 +73,7 @@ impl ContractData {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct PathfinderProof {
     pub state_commitment: Option<Felt>,
     pub contract_commitment: Felt,
