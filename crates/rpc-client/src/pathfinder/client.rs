@@ -34,7 +34,7 @@ async fn post_jsonrpc_request<T: DeserializeOwned>(
     params: serde_json::Value,
 ) -> Result<T, ClientError> {
     let request = jsonrpc_request(method, params);
-    let response = client.post(format!("{}", rpc_provider)).json(&request).send().await?;
+    let response = client.post(rpc_provider.to_string()).json(&request).send().await?;
 
     #[derive(Deserialize)]
     struct TransactionReceiptResponse<T> {
@@ -65,7 +65,7 @@ pub struct PathfinderRpcClient {
 
 impl PathfinderRpcClient {
     pub fn new(base_url: &str) -> Self {
-        let starknet_rpc_url = format!("{}", base_url);
+        let starknet_rpc_url = base_url.to_string();
         log::info!("Starknet RPC URL: {}", starknet_rpc_url);
         let http_client =
             reqwest::ClientBuilder::new().build().unwrap_or_else(|e| panic!("Could not build reqwest client: {e}"));
