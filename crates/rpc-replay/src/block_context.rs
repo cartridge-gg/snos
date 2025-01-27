@@ -3,7 +3,7 @@ use std::num::NonZeroU128;
 use blockifier::blockifier::block::{BlockInfo, GasPrices};
 use blockifier::bouncer::BouncerConfig;
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses};
-use blockifier::versioned_constants::VersionedConstants;
+use blockifier::versioned_constants::{StarknetVersion, VersionedConstants};
 use starknet::core::types::{BlockWithTxs, Felt, L1DataAvailabilityMode};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::core::{ChainId, ContractAddress, PatriciaKey};
@@ -69,8 +69,11 @@ pub fn build_block_context(
             * }, */
     };
 
-    // @kariy: We use the latest versioned constants to match what Katana is using.
-    let versioned_constants = VersionedConstants::latest_constants();
+    // IMPORTANT:
+    // The versioned constant must match the version that the block was executed with.
+    // In this case, the versioned constant that Katana is using.
+    const SN_VERSION: StarknetVersion = StarknetVersion::Latest; // v0.13.3
+    let versioned_constants = VersionedConstants::get(SN_VERSION);
     let bouncer_config = BouncerConfig::max();
 
     Ok(BlockContext::new(block_info, chain_info, versioned_constants.clone(), bouncer_config))
