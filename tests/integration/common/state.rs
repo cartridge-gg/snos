@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use blockifier::abi::abi_utils::get_fee_token_var_address;
 use blockifier::context::BlockContext;
 use blockifier::state::cached_state::CachedState;
 use blockifier::test_utils::dict_state_reader::DictStateReader;
@@ -9,6 +8,7 @@ use cairo_lang_starknet_classes::contract_class::ContractClass;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use rstest::fixture;
+use starknet_api::abi::abi_utils::get_fee_token_var_address;
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress};
 use starknet_os::crypto::pedersen::PedersenHash;
 use starknet_os::starknet::business_logic::fact_state::state::SharedState;
@@ -569,7 +569,7 @@ pub async fn initial_state_cairo0(
     StarknetStateBuilder::new(&block_context)
         .deploy_cairo0_contract(account_with_dummy_validate.0, account_with_dummy_validate.1)
         .deploy_cairo0_contract(test_contract.0, test_contract.1)
-        .set_default_balance(BALANCE, BALANCE)
+        .set_default_balance(*BALANCE, *BALANCE)
         .build()
         .await
 }
@@ -594,7 +594,7 @@ pub async fn initial_state_cairo1(
             account_with_dummy_validate.2,
         )
         .deploy_cairo0_contract(test_contract.0, test_contract.1)
-        .set_default_balance(BALANCE, BALANCE)
+        .set_default_balance(*BALANCE, *BALANCE)
         .build()
         .await
 }
@@ -615,7 +615,7 @@ pub async fn initial_state_syscalls(
             account_with_dummy_validate.2,
         )
         .deploy_cairo1_contract(test_contract.0, test_contract.1, test_contract.2)
-        .set_default_balance(BALANCE, BALANCE)
+        .set_default_balance(*BALANCE, *BALANCE)
         .build()
         .await
 }

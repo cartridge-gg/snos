@@ -1,28 +1,27 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::context::BlockContext;
 use blockifier::state::cached_state::CachedState;
 use blockifier::state::state_api::State;
 use blockifier::transaction::account_transaction::AccountTransaction;
-use blockifier::transaction::account_transaction::AccountTransaction::{Declare, DeployAccount, Invoke};
 use blockifier::transaction::objects::{TransactionInfo, TransactionInfoCreator};
 use blockifier::transaction::transaction_execution::Transaction;
-use blockifier::transaction::transactions::{ExecutableTransaction, L1HandlerTransaction};
+use blockifier::transaction::transactions::ExecutableTransaction;
 use cairo_vm::vm::errors::cairo_run_errors::CairoRunError::VmException;
 use cairo_vm::vm::runners::cairo_pie::CairoPie;
 use cairo_vm::Felt252;
-use num_bigint::BigUint;
 use rstest::rstest;
-use starknet_api::core::{calculate_contract_address, ChainId, ClassHash, ContractAddress, PatriciaKey};
+use starknet_api::abi::abi_utils::selector_from_name;
+use starknet_api::core::{calculate_contract_address, ChainId, ClassHash, ContractAddress};
+use starknet_api::executable_transaction::L1HandlerTransaction;
 use starknet_api::state::StorageKey;
+use starknet_api::transaction::fields::ValidResourceBounds;
 use starknet_api::transaction::{
     DeclareTransactionV0V1, DeclareTransactionV2, DeclareTransactionV3, DeployAccountTransactionV1,
-    DeployAccountTransactionV3, InvokeTransactionV0, InvokeTransactionV1, InvokeTransactionV3, Resource,
-    ResourceBoundsMapping, TransactionHash,
+    DeployAccountTransactionV3, InvokeTransactionV0, InvokeTransactionV1, InvokeTransactionV3, TransactionHash,
 };
-use starknet_api::{contract_address, felt, patricia_key};
+use starknet_api::{contract_address, felt};
 use starknet_crypto::{pedersen_hash, Felt};
 use starknet_os::config::{BLOCK_HASH_CONTRACT_ADDRESS, STORED_BLOCK_HASH_BUFFER};
 use starknet_os::crypto::pedersen::PedersenHash;
@@ -34,7 +33,6 @@ use starknet_os::io::input::StarknetOsInput;
 use starknet_os::io::output::StarknetOsOutput;
 use starknet_os::io::InternalTransaction;
 use starknet_os::starknet::business_logic::fact_state::state::SharedState;
-use starknet_os::starknet::core::os::transaction_hash::{L1_GAS, L2_GAS};
 use starknet_os::starknet::starknet_storage::OsSingleStarknetStorage;
 use starknet_os::storage::storage::Storage;
 use starknet_os::{config, run_os};
@@ -50,31 +48,18 @@ const DEPLOY_ACCOUNT_PREFIX: &[u8] = b"deploy_account";
 const INVOKE_PREFIX: &[u8] = b"invoke";
 const L1_HANDLER_PREFIX: &[u8] = b"l1_handler";
 
-const MAX_AMOUNT_BITS: usize = 64;
-const MAX_PRICE_PER_UNIT_BITS: usize = 128;
-
 const DATA_AVAILABILITY_MODE_BITS: usize = 32;
 
 /// Calculates the hash of the fee related fields of a transaction:
 /// 1. The transaction's tip.
 /// 2. A concatenation of the resource name, max amount and max price per unit - for each entry in
 ///    the resource bounds, in the following order: L1_gas, L2_gas.
-fn hash_fee_related_fields(tip: Felt252, resource_bounds: &ResourceBoundsMapping) -> Felt252 {
-    let mut data_to_hash = vec![tip];
-    let resource_value_offset = MAX_AMOUNT_BITS + MAX_PRICE_PER_UNIT_BITS;
+fn hash_fee_related_fields(tip: Felt252, resource_bounds: &ValidResourceBounds) -> Felt252 {
+    use num_traits::ToPrimitive;
+    use starknet_api::transaction::fields::Tip;
 
-    for (resource, resource_value) in [
-        (Resource::L1Gas, Felt252::from_bytes_be_slice(L1_GAS.as_bytes()).to_biguint()),
-        (Resource::L2Gas, Felt252::from_bytes_be_slice(L2_GAS.as_bytes()).to_biguint()),
-    ] {
-        let bounds = resource_bounds.0.get(&resource).unwrap();
-        let value = (resource_value << resource_value_offset)
-            + (BigUint::from(bounds.max_amount) << MAX_PRICE_PER_UNIT_BITS)
-            + BigUint::from(bounds.max_price_per_unit);
-        data_to_hash.push(Felt252::from(value));
-    }
-
-    poseidon_hash_on_elements(&data_to_hash)
+    let tip = Tip(tip.to_u64().expect("must fit u64"));
+    starknet_api::transaction_hash::get_tip_resource_bounds_hash(resource_bounds, &tip).unwrap()
 }
 
 /// Calculates the transaction hash in the StarkNet network - a unique identifier of the
@@ -101,7 +86,7 @@ fn calculate_transaction_v3_hash_common(
     paymaster_data: &[Felt252],
     nonce_data_availability_mode: Felt252,
     fee_data_availability_mode: Felt252,
-    resource_bounds: &ResourceBoundsMapping,
+    resource_bounds: &ValidResourceBounds,
 ) -> Felt252 {
     let fee_fields_hash = hash_fee_related_fields(tip, resource_bounds);
     let da_mode_concatenation = Felt252::from(
@@ -201,7 +186,7 @@ fn tx_hash_deploy_v3(
     chain_id: Felt252,
     nonce_data_availability_mode: Felt252,
     fee_data_availability_mode: Felt252,
-    resource_bounds: &ResourceBoundsMapping,
+    resource_bounds: &ValidResourceBounds,
     tip: Felt252,
     paymaster_data: &[Felt252],
     contract_address_salt: Felt252,
@@ -233,7 +218,7 @@ fn tx_hash_invoke_v3(
     chain_id: Felt252,
     nonce_data_availability_mode: Felt252,
     fee_data_availability_mode: Felt252,
-    resource_bounds: &ResourceBoundsMapping,
+    resource_bounds: &ValidResourceBounds,
     tip: Felt252,
     paymaster_data: &[Felt252],
     calldata: &[Felt252],
@@ -306,7 +291,7 @@ fn tx_hash_declare_v3(
     chain_id: Felt252,
     nonce_data_availability_mode: Felt252,
     fee_data_availability_mode: Felt252,
-    resource_bounds: &ResourceBoundsMapping,
+    resource_bounds: &ValidResourceBounds,
     tip: Felt252,
     paymaster_data: &[Felt252],
     account_deployment_data: &[Felt252],
@@ -383,14 +368,16 @@ pub fn l1_tx_compute_hash(
 /// Convert an Transaction to a SNOS InternalTransaction
 pub fn to_internal_tx(tx: &Transaction, chain_id: &ChainId) -> InternalTransaction {
     match tx {
-        Transaction::AccountTransaction(account_tx) => account_tx_to_internal_tx(account_tx, chain_id),
-        Transaction::L1HandlerTransaction(l1_tx) => to_internal_l1_handler_tx(l1_tx, chain_id),
+        Transaction::Account(account_tx) => account_tx_to_internal_tx(account_tx, chain_id),
+        Transaction::L1Handler(l1_tx) => to_internal_l1_handler_tx(l1_tx, chain_id),
     }
 }
 fn account_tx_to_internal_tx(account_tx: &AccountTransaction, chain_id: &ChainId) -> InternalTransaction {
-    match account_tx {
-        Declare(declare_tx) => {
-            match &declare_tx.tx() {
+    use starknet_api::executable_transaction::AccountTransaction as ApiAccountTransaction;
+
+    match &account_tx.tx {
+        ApiAccountTransaction::Declare(declare_tx) => {
+            match &declare_tx.tx {
                 starknet_api::transaction::DeclareTransaction::V0(_) => {
                     // explicitly not supported
                     panic!("Declare V0 is not supported");
@@ -404,7 +391,7 @@ fn account_tx_to_internal_tx(account_tx: &AccountTransaction, chain_id: &ChainId
                 starknet_api::transaction::DeclareTransaction::V3(tx) => to_internal_declare_v3_tx(tx, chain_id),
             }
         }
-        DeployAccount(deploy_tx) => match deploy_tx.tx() {
+        ApiAccountTransaction::DeployAccount(deploy_tx) => match deploy_tx.tx() {
             starknet_api::transaction::DeployAccountTransaction::V1(tx) => {
                 to_internal_deploy_v1_tx(account_tx, tx, chain_id)
             }
@@ -412,7 +399,7 @@ fn account_tx_to_internal_tx(account_tx: &AccountTransaction, chain_id: &ChainId
                 to_internal_deploy_v3_tx(account_tx, tx, chain_id)
             }
         },
-        Invoke(invoke_tx) => match &invoke_tx.tx {
+        ApiAccountTransaction::Invoke(invoke_tx) => match &invoke_tx.tx {
             starknet_api::transaction::InvokeTransaction::V0(tx) => to_internal_invoke_v0_tx(tx, chain_id),
             starknet_api::transaction::InvokeTransaction::V1(tx) => to_internal_invoke_v1_tx(tx, chain_id),
             starknet_api::transaction::InvokeTransaction::V3(tx) => to_internal_invoke_v3_tx(tx, chain_id),
@@ -746,8 +733,10 @@ pub fn to_internal_deploy_v3_tx(
     tx: &DeployAccountTransactionV3,
     chain_id: &ChainId,
 ) -> InternalTransaction {
-    let sender_address = match account_tx {
-        AccountTransaction::DeployAccount(a) => a.contract_address,
+    use starknet_api::executable_transaction::AccountTransaction as ApiAccountTransaction;
+
+    let sender_address = match &account_tx.tx {
+        ApiAccountTransaction::DeployAccount(a) => a.contract_address,
         _ => unreachable!(),
     };
     let signature = Some(tx.signature.0.to_vec());
@@ -815,12 +804,8 @@ pub fn to_internal_deploy_v3_tx(
 /// Retrieves the transaction hash from a Blockifier `Transaction` object.
 fn get_tx_hash(tx: &Transaction) -> TransactionHash {
     match tx {
-        Transaction::AccountTransaction(account_tx) => match account_tx {
-            AccountTransaction::Declare(declare_tx) => declare_tx.tx_hash,
-            AccountTransaction::DeployAccount(deploy_tx) => deploy_tx.tx_hash,
-            AccountTransaction::Invoke(invoke_tx) => invoke_tx.tx_hash,
-        },
-        Transaction::L1HandlerTransaction(l1_handler_tx) => l1_handler_tx.tx_hash,
+        Transaction::Account(account_tx) => account_tx.tx.tx_hash(),
+        Transaction::L1Handler(l1_handler_tx) => l1_handler_tx.tx_hash,
     }
 }
 
@@ -850,7 +835,7 @@ where
         .enumerate()
         .map(|(index, tx)| {
             let tx_hash = get_tx_hash(&tx).to_hex_string();
-            let tx_result = tx.execute(&mut state, block_context, true, true);
+            let tx_result = tx.execute(&mut state, block_context);
             match tx_result {
                 Err(e) => {
                     panic!("Transaction {} ({}/{}) failed in blockifier: {}", tx_hash, index + 1, n_txs, e);

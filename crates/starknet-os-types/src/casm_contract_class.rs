@@ -7,7 +7,7 @@ use crate::error::{ContractClassError, ConversionError};
 use crate::hash::GenericClassHash;
 
 pub type CairoLangCasmClass = cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
-pub type BlockifierCasmClass = blockifier::execution::contract_class::ContractClassV1;
+pub type BlockifierCasmClass = blockifier::execution::contract_class::CompiledClassV1;
 
 /// A generic contract class that supports conversion to/from the most commonly used
 /// contract class types in Starknet and provides utility methods.

@@ -7,11 +7,9 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::context::BlockContext;
-use blockifier::invoke_tx_args;
+use blockifier::test_utils::create_calldata;
 use blockifier::test_utils::invoke::invoke_tx;
-use blockifier::test_utils::{create_calldata, NonceManager};
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::test_utils;
 use blockifier::transaction::test_utils::max_fee;
@@ -19,9 +17,12 @@ use blockifier::transaction::transaction_execution::Transaction;
 use cairo_vm::Felt252;
 use num_traits::ToPrimitive;
 use rstest::rstest;
+use starknet_api::abi::abi_utils::selector_from_name;
 use starknet_api::core::calculate_contract_address;
-use starknet_api::felt;
-use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee, TransactionHash, TransactionVersion};
+use starknet_api::test_utils::NonceManager;
+use starknet_api::transaction::fields::{Calldata, ContractAddressSalt, Fee};
+use starknet_api::transaction::{TransactionHash, TransactionVersion};
+use starknet_api::{felt, invoke_tx_args};
 use starknet_os_types::chain_id::chain_id_to_felt;
 
 use crate::common::block_context;
@@ -66,7 +67,7 @@ async fn test_syscall_library_call_cairo0(
         nonce: nonce_manager.next(sender_address),
     });
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
 
     let (_pie, os_output) = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
@@ -108,7 +109,7 @@ async fn test_syscall_get_block_number_cairo0(
         nonce: nonce_manager.next(sender_address),
     });
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
 
     let (_pie, os_output) = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
@@ -150,7 +151,7 @@ async fn test_syscall_get_block_timestamp_cairo0(
         nonce: nonce_manager.next(sender_address),
     });
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
 
     let (_pie, os_output) = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
@@ -193,7 +194,7 @@ async fn test_syscall_get_tx_info_cairo0(
     let tx_hash =
         TransactionHash(Felt252::from_str("0x8704f5e69650b81810a420373c21885aa6e75a8c46e34095e12a2a5231815f").unwrap());
     let tx = {
-        let mut invoke_tx = invoke_tx(invoke_tx_args! {
+        let invoke_tx = invoke_tx(invoke_tx_args! {
             max_fee,
             sender_address: sender_address,
             calldata: create_calldata(contract_address, "test_get_tx_info_no_tx_hash_check", &[
@@ -205,14 +206,14 @@ async fn test_syscall_get_tx_info_cairo0(
             ]),
             version: tx_version,
             nonce,
+            tx_hash,
         });
         // Blockifier does not compute tx hashes. Insert the correct tx hash here to make
         // the storage updates match between Blockifier and the OS.
-        invoke_tx.tx_hash = tx_hash;
-        AccountTransaction::Invoke(invoke_tx)
+        AccountTransaction { tx: invoke_tx, execution_flags: Default::default() }
     };
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
 
     let (_pie, os_output) = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
@@ -274,7 +275,7 @@ async fn test_syscall_get_tx_signature_cairo0(
         nonce: nonce_manager.next(sender_address),
     });
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
 
     let (_pie, os_output) = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
@@ -319,7 +320,7 @@ async fn test_syscall_replace_class_cairo0(
         nonce: nonce_manager.next(sender_address),
     });
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
 
     // TODO: use a different class hash and check that it is reflected in the OS output.
     let (_pie, _os_output) = execute_txs_and_run_os(
@@ -380,7 +381,7 @@ async fn test_syscall_deploy_cairo0(
         nonce: nonce_manager.next(sender_address),
     });
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
 
     let (_pie, os_output) = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
@@ -436,7 +437,7 @@ async fn test_syscall_get_sequencer_address_cairo0(
         nonce: nonce_manager.next(sender_address),
     });
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
 
     let (_pie, os_output) = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
@@ -493,7 +494,7 @@ async fn test_syscall_get_contract_address_cairo0(
         nonce: nonce_manager.next(sender_address),
     });
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
 
     let (_pie, os_output) = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
@@ -546,7 +547,7 @@ async fn test_syscall_emit_event_cairo0(
         nonce: nonce_manager.next(sender_address),
     });
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
 
     let (_pie, _os_output) = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
@@ -595,7 +596,7 @@ async fn test_syscall_send_message_to_l1_cairo0(
         nonce: nonce_manager.next(sender_address),
     });
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
     let (_pie, os_output) = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
         initial_state.cached_state,

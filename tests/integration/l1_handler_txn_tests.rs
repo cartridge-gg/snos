@@ -1,15 +1,16 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::context::BlockContext;
 use blockifier::transaction::test_utils::{block_context, max_fee};
-use blockifier::transaction::transactions::L1HandlerTransaction;
 use futures::Future;
 use rstest::{fixture, rstest};
+use starknet_api::abi::abi_utils::selector_from_name;
 use starknet_api::core::{ContractAddress, EntryPointSelector};
+use starknet_api::executable_transaction::L1HandlerTransaction;
 use starknet_api::felt;
-use starknet_api::transaction::{Calldata, Fee, TransactionVersion};
+use starknet_api::transaction::fields::{Calldata, Fee};
+use starknet_api::transaction::TransactionVersion;
 
 use crate::common::state::{init_logging, initial_state_cairo0, initial_state_syscalls, StarknetTestState};
 use crate::common::transaction_utils::execute_txs_and_run_os;

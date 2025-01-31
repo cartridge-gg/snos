@@ -1,29 +1,30 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use blockifier::abi::abi_utils::selector_from_name;
-use blockifier::blockifier::block::BlockInfo;
 use blockifier::bouncer::BouncerConfig;
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses};
 use blockifier::state::cached_state::CachedState;
+use blockifier::test_utils::create_calldata;
 use blockifier::test_utils::declare::declare_tx;
 use blockifier::test_utils::deploy_account::deploy_account_tx;
 use blockifier::test_utils::invoke::invoke_tx;
-use blockifier::test_utils::{create_calldata, NonceManager};
+use blockifier::test_utils::struct_impls::BlockInfoExt;
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier::transaction::test_utils::{account_invoke_tx, calculate_class_info_for_testing, max_fee};
 use blockifier::transaction::transaction_execution::Transaction;
-use blockifier::transaction::transactions::{ExecutableTransaction, L1HandlerTransaction};
+use blockifier::transaction::transactions::ExecutableTransaction;
 use blockifier::versioned_constants::VersionedConstants;
-use blockifier::{declare_tx_args, deploy_account_tx_args, invoke_tx_args};
 use cairo_vm::Felt252;
 use rstest::{fixture, rstest};
+use starknet_api::abi::abi_utils::selector_from_name;
+use starknet_api::block::BlockInfo;
 use starknet_api::core::{calculate_contract_address, ChainId, ContractAddress, EntryPointSelector};
-use starknet_api::felt;
-use starknet_api::transaction::{
-    Calldata, ContractAddressSalt, Fee, TransactionHash, TransactionSignature, TransactionVersion,
-};
+use starknet_api::executable_transaction::L1HandlerTransaction;
+use starknet_api::test_utils::NonceManager;
+use starknet_api::transaction::fields::{Calldata, ContractAddressSalt, Fee, TransactionSignature};
+use starknet_api::transaction::{TransactionHash, TransactionVersion};
+use starknet_api::{declare_tx_args, deploy_account_tx_args, felt, invoke_tx_args};
 use starknet_os::crypto::pedersen::PedersenHash;
 use starknet_os::execution::helper::GenCallIter;
 use starknet_os::io::output::StarknetOsOutput;
@@ -54,7 +55,7 @@ macro_rules! build_invoke_tx {
             nonce: $nonce_manager.next($deploy_account_address),
         };
 
-        Transaction::AccountTransaction(AccountTransaction::Invoke(invoke_tx(tx_args)))
+        Transaction::Account(AccountTransaction { tx: invoke_tx(tx_args), execution_flags: Default::default() })
     }};
     (
         $deploy_account_address:expr,
@@ -71,14 +72,14 @@ macro_rules! build_invoke_tx {
             signature: TransactionSignature($signature),
         };
 
-        Transaction::AccountTransaction(AccountTransaction::Invoke(invoke_tx(tx_args)))
+        Transaction::Account(AccountTransaction { tx: invoke_tx(tx_args), execution_flags: Default::default() })
     }};
 }
 
 struct InitialTxs {
-    deploy_token_tx: blockifier::transaction::transactions::DeployAccountTransaction,
-    deploy_account_tx: blockifier::transaction::transactions::DeployAccountTransaction,
-    fund_account_tx: blockifier::transaction::transactions::InvokeTransaction,
+    deploy_token_tx: starknet_api::executable_transaction::AccountTransaction,
+    deploy_account_tx: starknet_api::executable_transaction::AccountTransaction,
+    fund_account_tx: starknet_api::executable_transaction::AccountTransaction,
     fee_token_address: ContractAddress,
     dummy_account_address: ContractAddress,
 }
@@ -87,9 +88,9 @@ impl InitialTxs {
     #[allow(clippy::wrong_self_convention)]
     fn to_vec(self) -> Vec<Transaction> {
         vec![
-            AccountTransaction::DeployAccount(self.deploy_token_tx).into(),
-            AccountTransaction::Invoke(self.fund_account_tx).into(),
-            AccountTransaction::DeployAccount(self.deploy_account_tx).into(),
+            AccountTransaction { tx: self.deploy_token_tx, execution_flags: Default::default() }.into(),
+            AccountTransaction { tx: self.fund_account_tx, execution_flags: Default::default() }.into(),
+            AccountTransaction { tx: self.deploy_account_tx, execution_flags: Default::default() }.into(),
         ]
     }
 }
@@ -104,7 +105,7 @@ async fn create_initial_transactions(
         version: TransactionVersion::ONE,
     };
     let deploy_token_tx = deploy_account_tx(deploy_token_tx_args, nonce_manager);
-    let fee_token_address = deploy_token_tx.contract_address;
+    let fee_token_address = deploy_token_tx.contract_address();
 
     let deploy_account_tx_args = deploy_account_tx_args! {
         class_hash: dummy_account.class_hash,
@@ -112,7 +113,7 @@ async fn create_initial_transactions(
     };
 
     let deploy_account_tx = deploy_account_tx(deploy_account_tx_args, nonce_manager);
-    let dummy_account_address = deploy_account_tx.contract_address;
+    let dummy_account_address = deploy_account_tx.contract_address();
 
     let fund_account_tx_args = invoke_tx_args! {
         sender_address: fee_token_address,
@@ -309,7 +310,7 @@ async fn prepare_extensive_os_test_params(
         },
         tx_hash: Default::default(),
     };
-    txs.push(Transaction::L1HandlerTransaction(l1_tx));
+    txs.push(Transaction::L1Handler(l1_tx));
 
     txs.push(build_invoke_tx!(
         deploy_account_address,
@@ -343,18 +344,18 @@ async fn prepare_extensive_os_test_params(
             nonce: nonce_manager.next(deploy_account_address),
             signature: TransactionSignature(vec![100u128.into()]),
             max_fee: Fee(0x10000000000000000000000000u128),     // 2**100
+            tx_hash: TransactionHash(felt!("0x538ed2ab8c30b384fda9cc92736a2212a0082444cce35135cdff5700885b156"))
         };
-        let mut tx = invoke_tx(tx_args);
-        tx.tx_hash = TransactionHash(felt!("0x538ed2ab8c30b384fda9cc92736a2212a0082444cce35135cdff5700885b156"));
+        let tx = invoke_tx(tx_args);
         tx
     };
-    let tx = Transaction::AccountTransaction(AccountTransaction::Invoke(inner_invoke_tx));
+    let tx = Transaction::Account(AccountTransaction { tx: inner_invoke_tx, execution_flags: Default::default() });
     txs.push(tx);
 
     let test_contract2 = cairo0_contracts.get("test_contract2").unwrap();
 
     let class_hash = test_contract2.class_hash;
-    let class = test_contract2.class.get_blockifier_contract_class().unwrap().clone();
+    let class = test_contract2.class.get_starknet_api_contract_class().unwrap().clone();
     let class_info = calculate_class_info_for_testing(class.into());
 
     let declare_tx = declare_tx(
@@ -366,7 +367,7 @@ async fn prepare_extensive_os_test_params(
         },
         class_info,
     );
-    txs.push(Transaction::AccountTransaction(declare_tx));
+    txs.push(Transaction::Account(AccountTransaction { tx: declare_tx, execution_flags: Default::default() }));
 
     txs.push(build_invoke_tx!(
         deploy_account_address,
@@ -443,7 +444,7 @@ fn add_declare_and_deploy_contract_txs(
 ) -> Result<ContractAddress, &'static str> {
     let contract = cairo0_contracts.get(contract).ok_or("Contract not found")?;
 
-    let class = contract.class.get_blockifier_contract_class().map_err(|_| "Failed to get VM class")?;
+    let class = contract.class.get_starknet_api_contract_class().map_err(|_| "Failed to get VM class")?;
     let class_info = calculate_class_info_for_testing(class.clone().into());
     let declare_tx = declare_tx(
         declare_tx_args! {
@@ -456,7 +457,7 @@ fn add_declare_and_deploy_contract_txs(
         class_info,
     );
 
-    txs.push(Transaction::AccountTransaction(declare_tx));
+    txs.push(Transaction::Account(AccountTransaction { tx: declare_tx, execution_flags: Default::default() }));
 
     let mut ctor_calldata = vec![
         contract.class_hash.0, // Class hash.
@@ -476,7 +477,7 @@ fn add_declare_and_deploy_contract_txs(
         nonce: nonce_manager.next(*deploy_account_address)
     });
 
-    txs.push(Transaction::AccountTransaction(invoke_tx));
+    txs.push(Transaction::Account(invoke_tx));
 
     let contract_address = calculate_contract_address(
         ContractAddressSalt(salt),
@@ -494,7 +495,7 @@ fn execute_transaction(
     cached_state: &mut CachedState<SharedState<DictStorage, PedersenHash>>,
     block_context: &BlockContext,
 ) -> TransactionExecutionInfo {
-    let tx_result = tx.execute(cached_state, block_context, true, true);
+    let tx_result = tx.execute(cached_state, block_context);
     match tx_result {
         Err(e) => {
             log::error!("Transaction failed in blockifier: {}", e);

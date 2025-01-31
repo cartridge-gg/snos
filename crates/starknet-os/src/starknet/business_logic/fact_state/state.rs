@@ -1,7 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 
-use blockifier::execution::contract_class::ContractClass;
+use blockifier::execution::contract_class::RunnableCompiledClass;
+// use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{StateReader, StateResult};
@@ -401,7 +402,7 @@ where
     async fn get_compiled_contract_class_async(
         &self,
         compiled_class_hash: CompiledClassHash,
-    ) -> StateResult<ContractClass> {
+    ) -> StateResult<RunnableCompiledClass> {
         log::debug!("SharedState as StateReader: get_compiled_contract_class {:?}", compiled_class_hash);
 
         // Try the deprecated compiled classes.
@@ -479,7 +480,7 @@ where
     }
 
     /// Returns the contract class of the given class hash.
-    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
+    fn get_compiled_class(&self, class_hash: ClassHash) -> StateResult<RunnableCompiledClass> {
         execute_coroutine(async {
             let compiled_class_hash = self.get_compiled_class_hash_async(class_hash).await?;
             self.get_compiled_contract_class_async(compiled_class_hash).await

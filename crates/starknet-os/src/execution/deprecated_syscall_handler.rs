@@ -1,10 +1,10 @@
 use std::rc::Rc;
 
-use blockifier::blockifier::block::BlockInfo;
 use cairo_vm::types::relocatable::{MaybeRelocatable, Relocatable};
 use cairo_vm::vm::errors::hint_errors::HintError;
 use cairo_vm::vm::vm_core::VirtualMachine;
 use cairo_vm::Felt252;
+use starknet_api::block::BlockInfo;
 use tokio::sync::RwLock;
 
 use super::helper::ExecutionHelperWrapper;
@@ -73,6 +73,8 @@ where
             syscall_handler.exec_wrapper.execution_helper.write().await.result_iter.next().ok_or(
                 HintError::SyscallError("Expected a result when calling contract".to_string().into_boxed_str()),
             )?;
+
+        dbg!(&result);
 
         let retdata_size_offset = response_offset + CallContractResponse::retdata_size_offset();
         let retdata_offset = response_offset + CallContractResponse::retdata_offset();
@@ -299,7 +301,6 @@ where
 mod test {
     use std::borrow::Cow;
 
-    use blockifier::blockifier::block::{BlockInfo, GasPrices};
     use blockifier::bouncer::BouncerConfig;
     use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses};
     use blockifier::execution::call_info::Retdata;
@@ -310,9 +311,9 @@ mod test {
     use cairo_vm::vm::vm_core::VirtualMachine;
     use cairo_vm::Felt252;
     use rstest::{fixture, rstest};
-    use starknet_api::block::{BlockNumber, BlockTimestamp};
-    use starknet_api::core::{ChainId, ContractAddress, PatriciaKey};
-    use starknet_api::{contract_address, felt, patricia_key};
+    use starknet_api::block::{BlockInfo, BlockNumber, BlockTimestamp, GasPrices};
+    use starknet_api::contract_address;
+    use starknet_api::core::ChainId;
 
     use crate::config::STORED_BLOCK_HASH_BUFFER;
     use crate::crypto::pedersen::PedersenHash;
@@ -336,12 +337,7 @@ mod test {
             block_number: BlockNumber(1_000_000),
             block_timestamp: BlockTimestamp(1_704_067_200),
             sequencer_address: contract_address!("0x0"),
-            gas_prices: GasPrices {
-                eth_l1_gas_price: 1u128.try_into().unwrap(),
-                strk_l1_gas_price: 1u128.try_into().unwrap(),
-                eth_l1_data_gas_price: 1u128.try_into().unwrap(),
-                strk_l1_data_gas_price: 1u128.try_into().unwrap(),
-            },
+            gas_prices: GasPrices::default(),
             use_kzg_da: false,
         };
 

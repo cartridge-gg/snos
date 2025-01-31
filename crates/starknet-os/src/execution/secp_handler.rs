@@ -367,7 +367,8 @@ mod tests {
         EcPointCoordinates, SecpAddRequest, SecpGetPointFromXRequest, SecpGetXyRequest, SecpHintProcessor,
         SecpMulRequest, SecpOpRespone, SecpOptionalEcPointResponse,
     };
-    use blockifier::execution::syscalls::SyscallResult;
+    use blockifier::execution::syscalls::syscall_base::SyscallResult;
+    // use blockifier::execution::syscalls::SyscallResult;
     use num_bigint::BigUint;
     use num_traits::{FromPrimitive, Num};
     use rstest::rstest;

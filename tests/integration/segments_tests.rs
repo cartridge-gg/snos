@@ -1,11 +1,13 @@
 use blockifier::context::BlockContext;
-use blockifier::invoke_tx_args;
-use blockifier::test_utils::{create_calldata, NonceManager};
+use blockifier::test_utils::create_calldata;
 use blockifier::transaction::test_utils;
 use blockifier::transaction::test_utils::max_fee;
 use blockifier::transaction::transaction_execution::Transaction;
 use rstest::rstest;
-use starknet_api::transaction::{Fee, TransactionVersion};
+use starknet_api::invoke_tx_args;
+use starknet_api::test_utils::NonceManager;
+use starknet_api::transaction::fields::Fee;
+use starknet_api::transaction::TransactionVersion;
 
 use crate::common::block_context;
 use crate::common::state::{initial_state_syscalls, StarknetTestState};
@@ -40,7 +42,7 @@ async fn test_segment_arena(
         nonce: nonce_manager.next(sender_address),
     });
 
-    let txs = vec![Transaction::AccountTransaction(tx)];
+    let txs = vec![Transaction::Account(tx)];
 
     let (_pie, _os_output) = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,

@@ -1,13 +1,17 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use blockifier::context::BlockContext;
-use blockifier::declare_tx_args;
-use blockifier::execution::contract_class::ClassInfo;
-use blockifier::test_utils::{NonceManager, BALANCE};
+use blockifier::test_utils::BALANCE;
+use blockifier::transaction::account_transaction::AccountTransaction as BlockifierAccountTransaction;
 use blockifier::transaction::test_utils::{calculate_class_info_for_testing, max_fee};
 use rstest::{fixture, rstest};
+use starknet_api::contract_class::{ClassInfo, SierraVersion};
 use starknet_api::core::CompiledClassHash;
-use starknet_api::transaction::{Fee, Resource, ResourceBounds, ResourceBoundsMapping, TransactionVersion};
+use starknet_api::declare_tx_args;
+use starknet_api::test_utils::NonceManager;
+use starknet_api::transaction::fields::{Fee, ValidResourceBounds};
+use starknet_api::transaction::TransactionVersion;
 use starknet_os::crypto::poseidon::PoseidonHash;
 use starknet_os::starknet::business_logic::utils::write_class_facts;
 use starknet_os_types::class_hash_utils::ContractClassComponentHashes;
@@ -19,12 +23,8 @@ use crate::common::state::{init_logging, initial_state_cairo1, StarknetStateBuil
 use crate::common::transaction_utils::execute_txs_and_run_os;
 
 // Copied from the non-public Blockifier fn
-pub fn default_testing_resource_bounds() -> ResourceBoundsMapping {
-    ResourceBoundsMapping::try_from(vec![
-        (Resource::L1Gas, ResourceBounds { max_amount: 0, max_price_per_unit: 1 }),
-        (Resource::L2Gas, ResourceBounds { max_amount: 0, max_price_per_unit: 0 }),
-    ])
-    .unwrap()
+pub fn default_testing_resource_bounds() -> ValidResourceBounds {
+    ValidResourceBounds::create_for_testing_no_fee_enforcement()
 }
 
 #[rstest]
@@ -55,7 +55,8 @@ async fn declare_v3_cairo1_account(
 
     let sender_address = account_contract.address;
 
-    let contract_class = casm_class.to_blockifier_contract_class().unwrap();
+    let contract_class = casm_class.to_cairo_lang_contract_class().unwrap();
+    let sierra_version = SierraVersion::from_str(&contract_class.compiler_version).unwrap();
     let class_hash = starknet_api::core::ClassHash::from(contract_class_hash);
     let compiled_class_hash = CompiledClassHash::from(compiled_class_hash);
 
@@ -66,7 +67,7 @@ async fn declare_v3_cairo1_account(
     let class_hash_component_hashes =
         HashMap::from([(class_hash, ContractClassComponentHashes::from(flattened_sierra_class))]);
 
-    let class_info = ClassInfo::new(&contract_class.into(), sierra_program_len, 0).unwrap();
+    let class_info = ClassInfo::new(&contract_class.into(), sierra_program_len, 0, sierra_version).unwrap();
 
     let declare_tx = blockifier::test_utils::declare::declare_tx(
         declare_tx_args! {
@@ -81,7 +82,11 @@ async fn declare_v3_cairo1_account(
         class_info,
     );
 
-    let txs = vec![declare_tx].into_iter().map(Into::into).collect();
+    let txs = vec![declare_tx]
+        .into_iter()
+        .map(|tx| BlockifierAccountTransaction { tx, execution_flags: Default::default() }.into())
+        .collect();
+
     let _result = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
         initial_state.cached_state,
@@ -123,7 +128,9 @@ async fn declare_cairo1_account(
 
     let sender_address = account_contract.address;
 
-    let contract_class = casm_class.to_blockifier_contract_class().unwrap();
+    let contract_class = casm_class.to_cairo_lang_contract_class().unwrap();
+    let sierra_version = SierraVersion::from_str(&contract_class.compiler_version).unwrap();
+
     let class_hash = starknet_api::core::ClassHash::from(contract_class_hash);
     let compiled_class_hash = CompiledClassHash::from(compiled_class_hash);
 
@@ -134,7 +141,7 @@ async fn declare_cairo1_account(
     let class_hash_component_hashes =
         HashMap::from([(class_hash, ContractClassComponentHashes::from(flattened_sierra_class))]);
 
-    let class_info = ClassInfo::new(&contract_class.into(), sierra_program_len, 0).unwrap();
+    let class_info = ClassInfo::new(&contract_class.into(), sierra_program_len, 0, sierra_version).unwrap();
 
     let declare_tx = blockifier::test_utils::declare::declare_tx(
         declare_tx_args! {
@@ -148,7 +155,11 @@ async fn declare_cairo1_account(
         class_info,
     );
 
-    let txs = vec![declare_tx].into_iter().map(Into::into).collect();
+    let txs = vec![declare_tx]
+        .into_iter()
+        .map(|tx| BlockifierAccountTransaction { tx, execution_flags: Default::default() }.into())
+        .collect();
+
     let _result = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
         initial_state.cached_state,
@@ -173,7 +184,7 @@ async fn initial_state_declare_cairo0(
     StarknetStateBuilder::new(&block_context)
         .deploy_cairo0_contract(account_with_dummy_validate.0, account_with_dummy_validate.1)
         .deploy_cairo0_contract(account_with_syscall_checks.0, account_with_syscall_checks.1)
-        .set_default_balance(BALANCE, BALANCE)
+        .set_default_balance(*BALANCE, *BALANCE)
         .build()
         .await
 }
@@ -195,7 +206,7 @@ async fn declare_v1_cairo0_account(
     let mut nonce_manager = NonceManager::default();
     let tx_version = TransactionVersion::ONE;
 
-    let blockifier_class = test_contract.to_blockifier_contract_class().unwrap();
+    let blockifier_class = test_contract.to_starknet_api_contract_class().unwrap();
     let class_info = calculate_class_info_for_testing(blockifier_class.into());
 
     let declare_tx = blockifier::test_utils::declare::declare_tx(
@@ -209,7 +220,11 @@ async fn declare_v1_cairo0_account(
         class_info,
     );
 
-    let txs = vec![declare_tx].into_iter().map(Into::into).collect();
+    let txs = vec![declare_tx]
+        .into_iter()
+        .map(|tx| BlockifierAccountTransaction { tx, execution_flags: Default::default() }.into())
+        .collect();
+
     let _result = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
         initial_state.cached_state,
@@ -249,7 +264,9 @@ async fn declare_cairo0_with_tx_info(
     let (contract_class_hash, compiled_class_hash) =
         write_class_facts(sierra_class.clone().into(), casm_class.clone(), &mut ffc).await.unwrap();
 
-    let contract_class = casm_class.to_blockifier_contract_class().unwrap();
+    let contract_class = casm_class.to_cairo_lang_contract_class().unwrap();
+    let sierra_version = SierraVersion::from_str(&contract_class.compiler_version).unwrap();
+
     let class_hash = starknet_api::core::ClassHash::from(contract_class_hash);
     let compiled_class_hash = CompiledClassHash::from(compiled_class_hash);
 
@@ -260,7 +277,7 @@ async fn declare_cairo0_with_tx_info(
     let class_hash_component_hashes =
         HashMap::from([(class_hash, ContractClassComponentHashes::from(flattened_sierra_class))]);
 
-    let class_info = ClassInfo::new(&contract_class.into(), sierra_program_len, 0).unwrap();
+    let class_info = ClassInfo::new(&contract_class.into(), sierra_program_len, 0, sierra_version).unwrap();
 
     let declare_tx = blockifier::test_utils::declare::declare_tx(
         declare_tx_args! {
@@ -275,7 +292,11 @@ async fn declare_cairo0_with_tx_info(
         class_info,
     );
 
-    let txs = vec![declare_tx].into_iter().map(Into::into).collect();
+    let txs = vec![declare_tx]
+        .into_iter()
+        .map(|tx| BlockifierAccountTransaction { tx, execution_flags: Default::default() }.into())
+        .collect();
+
     let _result = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
         initial_state.cached_state,

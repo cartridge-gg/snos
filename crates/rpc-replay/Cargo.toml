@@ -16,6 +16,7 @@ starknet_api = { workspace = true }
 starknet-os-types = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+async-backtrace = "0.2.7"
 
 [dev-dependencies]
 rstest = { workspace = true }

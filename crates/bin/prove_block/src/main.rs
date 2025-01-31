@@ -32,7 +32,14 @@ async fn main() {
     let block_number = args.block_number;
     let layout = LayoutName::all_cairo;
 
-    let result = prove_block::prove_block(DEFAULT_COMPILED_OS, block_number, &args.rpc_provider, layout, true).await;
+    let result = async_backtrace::frame!(prove_block::prove_block(
+        DEFAULT_COMPILED_OS,
+        block_number,
+        &args.rpc_provider,
+        layout,
+        true
+    ))
+    .await;
     let (pie, _snos_output) = result.map_err(debug_prove_error).expect("Block proven");
     pie.run_validity_checks().expect("Valid PIE");
 }

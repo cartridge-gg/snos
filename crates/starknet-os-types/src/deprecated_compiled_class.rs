@@ -11,7 +11,7 @@ use crate::starknet_core_addons::{decompress_starknet_core_contract_class, Legac
 pub type StarknetApiDeprecatedClass = starknet_api::deprecated_contract_class::ContractClass;
 pub type StarknetCoreDeprecatedClass = starknet_core::types::contract::legacy::LegacyContractClass;
 pub type CompressedStarknetCoreDeprecatedClass = starknet_core::types::CompressedLegacyContractClass;
-pub type BlockifierDeprecatedClass = blockifier::execution::contract_class::ContractClassV0;
+pub type BlockifierDeprecatedClass = blockifier::execution::contract_class::CompiledClassV0;
 
 /// A generic contract class that supports conversion to/from the most commonly used
 /// contract class types in Starknet and provides utility methods.
@@ -40,12 +40,9 @@ impl GenericDeprecatedCompiledClass {
     }
 
     fn build_starknet_api_class(&self) -> Result<StarknetApiDeprecatedClass, ContractClassError> {
-        if let Some(serialized_class) = self.serialized_class.get() {
-            let contract_class = serde_json::from_slice(serialized_class)?;
-            return Ok(contract_class);
-        }
-
-        Err(ContractClassError::ConversionError(ConversionError::StarknetClassMissing))
+        let serialized_class = self.serialized_class.get_or_try_init(|| serde_json::to_vec(self))?;
+        let starknet_api_class: StarknetApiDeprecatedClass = serde_json::from_slice(serialized_class)?;
+        Ok(starknet_api_class)
     }
 
     fn build_blockifier_class(&self) -> Result<BlockifierDeprecatedClass, ContractClassError> {

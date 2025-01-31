@@ -21,6 +21,7 @@ use cairo_vm::{any_box, Felt252};
 use indoc::indoc;
 use num_bigint::BigUint;
 use num_traits::ToPrimitive;
+use starknet_api::transaction::fields::ValidResourceBounds;
 
 use crate::cairo_types::new_syscalls;
 use crate::cairo_types::structs::{EntryPointReturnValues, ExecutionContext};
@@ -706,13 +707,22 @@ pub fn tx_resource_bounds_len(
     _ap_tracking: &ApTracking,
     _constants: &HashMap<String, Felt252>,
 ) -> Result<(), HintError> {
+    // Based on `ValidResourceBounds::serialize` implementation.
+    fn get_resource_bounds_length(resource_bounds: &ValidResourceBounds) -> usize {
+        match resource_bounds {
+            ValidResourceBounds::L1Gas(_) => 2,        // L1Gas + default L2Gas
+            ValidResourceBounds::AllResources(_) => 3, // L1Gas + L2Gas + L1DataGas
+        }
+    }
+
     let tx = exec_scopes.get::<InternalTransaction>(vars::scopes::TX)?;
     let version = tx.version.unwrap_or(Felt252::ZERO);
     let resource_bounds = if version < Felt252::THREE {
         Felt252::ZERO
     } else {
-        tx.resource_bounds.ok_or(custom_hint_error("tx.resource_bounds is None"))?.0.len().into()
+        get_resource_bounds_length(&tx.resource_bounds.ok_or(custom_hint_error("tx.resource_bounds is None"))?).into()
     };
+
     insert_value_into_ap(vm, resource_bounds)
 }
 
@@ -968,7 +978,7 @@ where
     let return_values_ptr = get_ptr_from_var_name(vars::ids::ENTRY_POINT_RETURN_VALUES, vm, ids_data, ap_tracking)?;
 
     let failure_flag = vm.get_integer((return_values_ptr + EntryPointReturnValues::failure_flag_offset())?)?;
-    if failure_flag.into_owned() != Felt252::ZERO {
+    if dbg!(failure_flag.into_owned() != Felt252::ZERO) {
         let retdata_end = vm.get_relocatable((return_values_ptr + EntryPointReturnValues::retdata_end_offset())?)?;
         let retdata_start =
             vm.get_relocatable((return_values_ptr + EntryPointReturnValues::retdata_start_offset())?)?;
@@ -984,11 +994,35 @@ where
         log::debug!("  Error (at most 100 elements): {:?}", error);
     }
 
+    let execution_context = get_ptr_from_var_name(vars::ids::EXECUTION_CONTEXT, vm, ids_data, ap_tracking)?;
+    let class_hash = vm.get_integer((execution_context + ExecutionContext::class_hash_offset())?)?;
+    dbg!(class_hash.into_owned());
+
+    let selector = vm.get_relocatable((execution_context + ExecutionContext::execution_info_offset())?)?;
+    dbg!(selector);
+
     let mut execution_helper = exec_scopes.get::<ExecutionHelperWrapper<PCS>>(vars::scopes::EXECUTION_HELPER)?;
+
     // TODO: make sure it is necessary to check the gas costs
     // if execution_helper.debug_mode {
-    //     let actual = get_integer_from_var_name("remaining_gas", vm, ids_data, ap_tracking)?;
-    //     let predicted = get_integer_from_var_name("gas_consumed", vm, ids_data, ap_tracking)?;
+    // let actual = get_integer_from_var_name("remaining_gas", vm, ids_data, ap_tracking)?;
+    // let predicted = get_integer_from_var_name("gas_consumed", vm, ids_data, ap_tracking)?;
+
+    // actual = ids.remaining_gas - ids.entry_point_return_values.gas_builtin
+    // predicted = execution_helper.call_info.gas_consumed
+
+    let remaining_gas = get_integer_from_var_name("remaining_gas", vm, ids_data, ap_tracking)?;
+    let gas_builtin = vm.get_integer((return_values_ptr + EntryPointReturnValues::gas_builtin_offset())?)?.into_owned();
+    let actual = remaining_gas - gas_builtin;
+
+    let predicted = execution_helper.execution_helper.read().await.call_info.as_ref().unwrap().execution.gas_consumed;
+
+    dbg!(format!("{remaining_gas}"));
+    dbg!(format!("{gas_builtin}"));
+
+    println!("----------------------------------------");
+    println!("actual {actual} , predicted {predicted}");
+
     //     assert_eq!(
     //         actual,
     //         predicted,

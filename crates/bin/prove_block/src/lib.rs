@@ -112,6 +112,7 @@ fn compute_class_commitment(
     CommitmentInfo { previous_root, updated_root, tree_height: 251, commitment_facts: class_commitment_facts }
 }
 
+#[async_backtrace::framed]
 pub async fn prove_block(
     compiled_os: &[u8],
     block_number: u64,
@@ -179,6 +180,7 @@ pub async fn prove_block(
     let mut blockifier_state = CachedState::new(blockifier_state_reader);
 
     assert_eq!(block_with_txs.transactions.len(), traces.len(), "Transactions and traces must have the same length");
+
     let mut txs = Vec::new();
     for (tx, trace) in block_with_txs.transactions.iter().zip(traces.iter()) {
         let transaction =

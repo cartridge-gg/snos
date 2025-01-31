@@ -2,15 +2,16 @@ use std::collections::HashMap;
 
 use blockifier::context::BlockContext;
 use blockifier::test_utils::deploy_account::deploy_account_tx;
-use blockifier::test_utils::{create_calldata, NonceManager, BALANCE};
+use blockifier::test_utils::{create_calldata, BALANCE};
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::test_utils::{self, max_fee};
-use blockifier::{deploy_account_tx_args, invoke_tx_args};
 use cairo_vm::Felt252;
 use rstest::{fixture, rstest};
-use starknet_api::core::{calculate_contract_address, ClassHash, ContractAddress, PatriciaKey};
-use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee, TransactionVersion};
-use starknet_api::{class_hash, contract_address, felt, patricia_key};
+use starknet_api::core::{calculate_contract_address, ClassHash, ContractAddress};
+use starknet_api::test_utils::NonceManager;
+use starknet_api::transaction::fields::{Calldata, ContractAddressSalt, Fee};
+use starknet_api::transaction::TransactionVersion;
+use starknet_api::{class_hash, contract_address, deploy_account_tx_args, felt, invoke_tx_args};
 
 use crate::common::block_context;
 use crate::common::blockifier_contracts::{load_cairo0_feature_contract, load_cairo1_feature_contract};
@@ -63,8 +64,8 @@ pub async fn initial_state_for_deploy_v1(
         .deploy_cairo0_contract(account_with_dummy_validate.0, account_with_dummy_validate.1)
         .deploy_cairo0_contract(account_with_long_validate.0, account_with_long_validate.1)
         .deploy_cairo0_contract(test_contract.0, test_contract.1)
-        .fund_account(deployed_contract_address, BALANCE, BALANCE)
-        .set_default_balance(BALANCE, BALANCE)
+        .fund_account(deployed_contract_address, *BALANCE, *BALANCE)
+        .set_default_balance(*BALANCE, *BALANCE)
         .build()
         .await;
 
@@ -90,7 +91,7 @@ async fn deploy_cairo0_account(
     // the right one.
     assert_eq!(deploy_args.class_hash, deployed_account_class_hash);
 
-    let deploy_account_tx = AccountTransaction::DeployAccount(deploy_account_tx(
+    let deploy_account_tx = deploy_account_tx(
         deploy_account_tx_args! {
             class_hash: deployed_account_class_hash,
             max_fee,
@@ -99,9 +100,13 @@ async fn deploy_cairo0_account(
             constructor_calldata: Calldata(deploy_args.constructor_calldata.into())
         },
         &mut nonce_manager,
-    ));
+    );
 
-    let txs = vec![deploy_account_tx].into_iter().map(Into::into).collect();
+    let txs = vec![deploy_account_tx]
+        .into_iter()
+        .map(|tx| AccountTransaction { tx, execution_flags: Default::default() }.into())
+        .collect();
+
     let _result = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
         initial_state.cached_state,
@@ -159,8 +164,8 @@ pub async fn initial_state_for_deploy_v3(
         )
         .deploy_cairo1_contract(test_contract.0, test_contract.1, test_contract.2)
         .deploy_cairo1_contract(empty_contract.0, empty_contract.1, empty_contract.2)
-        .fund_account(deployed_contract_address, BALANCE, BALANCE)
-        .set_default_balance(BALANCE, BALANCE)
+        .fund_account(deployed_contract_address, *BALANCE, *BALANCE)
+        .set_default_balance(*BALANCE, *BALANCE)
         .build()
         .await;
 
@@ -197,7 +202,11 @@ async fn deploy_cairo1_account(
         &mut nonce_manager,
     );
 
-    let txs = vec![AccountTransaction::DeployAccount(deploy_account_tx)].into_iter().map(Into::into).collect();
+    let txs = vec![deploy_account_tx]
+        .into_iter()
+        .map(|tx| AccountTransaction { tx, execution_flags: Default::default() }.into())
+        .collect();
+
     let _result = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
         initial_state.cached_state,
@@ -376,8 +385,8 @@ async fn deploy_cairo0_check_get_info_call(block_context: BlockContext, max_fee:
 
     let initial_state = StarknetStateBuilder::new(&block_context)
         .deploy_cairo0_contract(account_with_syscall_checks.0, account_with_syscall_checks.1)
-        .fund_account(deployed_contract_address, BALANCE, BALANCE)
-        .set_default_balance(BALANCE, BALANCE)
+        .fund_account(deployed_contract_address, *BALANCE, *BALANCE)
+        .set_default_balance(*BALANCE, *BALANCE)
         .build()
         .await;
 
@@ -392,7 +401,7 @@ async fn deploy_cairo0_check_get_info_call(block_context: BlockContext, max_fee:
     // the right one.
     assert_eq!(class_hash, deployed_account_class_hash);
 
-    let deploy_account_tx = AccountTransaction::DeployAccount(deploy_account_tx(
+    let deploy_account_tx = deploy_account_tx(
         deploy_account_tx_args! {
             class_hash: deployed_account_class_hash,
             max_fee,
@@ -402,9 +411,13 @@ async fn deploy_cairo0_check_get_info_call(block_context: BlockContext, max_fee:
             ..Default::default()
         },
         &mut nonce_manager,
-    ));
+    );
 
-    let txs = vec![deploy_account_tx].into_iter().map(Into::into).collect();
+    let txs = vec![deploy_account_tx]
+        .into_iter()
+        .map(|tx| AccountTransaction { tx, execution_flags: Default::default() }.into())
+        .collect();
+
     let _result = execute_txs_and_run_os(
         crate::common::DEFAULT_COMPILED_OS,
         initial_state.cached_state,

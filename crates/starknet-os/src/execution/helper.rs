@@ -10,7 +10,7 @@ use blockifier::transaction::objects::TransactionExecutionInfo;
 use cairo_vm::types::relocatable::Relocatable;
 use cairo_vm::vm::errors::hint_errors::HintError;
 use cairo_vm::Felt252;
-use starknet_api::deprecated_contract_class::EntryPointType;
+use starknet_api::contract_class::EntryPointType;
 use tokio::sync::RwLock;
 
 use super::secp_handler::SecpSyscallProcessor;
@@ -194,6 +194,10 @@ where
             })
             .collect::<Vec<Felt252>>()
             .into_iter();
+
+        dbg!(call_info.execution.gas_consumed);
+        // let gas_consumed = call_info.inner_calls.iter().map(|call| call.execution.gas_consumed).sum::<u64>();
+        // dbg!(gas_consumed);
 
         // unpack call results
         eh_ref.result_iter = call_info
