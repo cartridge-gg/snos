@@ -13,7 +13,7 @@ echo $SCRIPT_DIR
 mkdir -p $REPO_ROOT/katana_db
 
 $SUDO docker run --rm \
-  -v "$REPO_ROOT/tests/fixtures/chain-config:/chain-config" \
+  -v "$REPO_ROOT/bin/prove_block/tests/fixtures/chain-config:/chain-config" \
   ghcr.io/dojoengine/dojo:$DOJO_VERSION \
   katana init --id testchain --settlement-chain sepolia \
   --settlement-account-address 0x04ac0264c73207f9bc7b12801500324be647a8c2fc56964f8e1945ca993006a7 \
@@ -24,7 +24,7 @@ $SUDO docker run --rm \
 
 # Runs katana in the background
 $SUDO docker run -d --name katana \
-  -v "$REPO_ROOT/tests/fixtures/chain-config:/chain-config" \
+  -v "$REPO_ROOT/bin/prove_block/tests/fixtures/chain-config:/chain-config" \
   -v "$REPO_ROOT/katana_db:/katana-db" \
   ghcr.io/dojoengine/dojo:$DOJO_VERSION \
   katana --chain /chain-config --db-dir /katana-db

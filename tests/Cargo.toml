@@ -29,7 +29,3 @@ starknet-os = { path = "../crates/starknet-os" }
 starknet-os-types = { path = "../crates/starknet-os-types" }
 tokio = { workspace = true }
 uuid = { workspace = true }
-
-katana-primitives = { git = "https://github.com/dojoengine/dojo", rev = "f0c1e0bc" }
-katana-node = { git = "https://github.com/dojoengine/dojo", rev = "f0c1e0bc" }
-katana-provider = { git = "https://github.com/dojoengine/dojo", rev = "f0c1e0bc" }
