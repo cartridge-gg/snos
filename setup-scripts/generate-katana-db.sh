@@ -37,6 +37,6 @@ $SUDO docker run --rm \
   --entrypoint "/scripts" \
   ghcr.io/dojoengine/dojo:$DOJO_VERSION
 
-Clean up - stop the katana container
+# Clean up - stop the katana container
 $SUDO docker stop katana
 $SUDO docker rm katana
