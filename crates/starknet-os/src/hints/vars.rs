@@ -124,6 +124,7 @@ pub mod ids {
     pub const REQUIRED_GAS: &str = "required_gas";
     pub const RES: &str = "res";
     pub const RESOURCE_BOUNDS: &str = "resource_bounds";
+    pub const N_RESOURCE_BOUNDS: &str = "n_resource_bounds";
     pub const RESPONSE: &str = "response";
     pub const RETDATA: &str = "retdata";
     pub const RETDATA_SIZE: &str = "retdata_size";
@@ -175,6 +176,8 @@ pub mod ids {
     pub const DECOMPRESSED_DST: &str = "decompressed_dst";
     pub const PACKED_FELT: &str = "packed_felt";
     pub const ELM_BOUND: &str = "elm_bound";
+    pub const REMAINING_GAS: &str = "remaining_gas";
+    pub const MAX_GAS: &str = "max_gas";
 }
 
 pub mod constants {

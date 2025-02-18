@@ -108,6 +108,7 @@ fn hints<PCS>() -> HashMap<String, HintImpl> where
     hints.insert(execute_transactions::SET_COMPONENT_HASHES.into(), execute_transactions::set_component_hashes);
     hints.insert(execute_transactions::SET_SHA256_SEGMENT_IN_SYSCALL_HANDLER.into(), execute_transactions::set_sha256_segment_in_syscall_handler::<PCS>);
     hints.insert(execute_transactions::START_TX_VALIDATE_DECLARE_EXECUTION_CONTEXT.into(), execute_transactions::start_tx_validate_declare_execution_context::<PCS>);
+    hints.insert(execute_transactions::SET_AP_TO_GAS_CAP.into(), execute_transactions::set_ap_to_gas_cap);
     hints.insert(execution::ADD_RELOCATION_RULE.into(), execution::add_relocation_rule);
     hints.insert(execution::ASSERT_TRANSACTION_HASH.into(), execution::assert_transaction_hash);
     hints.insert(execution::CACHE_CONTRACT_STORAGE_REQUEST_KEY.into(), execution::cache_contract_storage_request_key::<PCS>);
@@ -144,6 +145,7 @@ fn hints<PCS>() -> HashMap<String, HintImpl> where
     hints.insert(execution::IS_DEPRECATED.into(), execution::is_deprecated);
     hints.insert(execution::IS_REVERTED.into(), execution::is_reverted::<PCS>);
     hints.insert(execution::LOAD_NEXT_TX.into(), execution::load_next_tx);
+    hints.insert(execution::LOAD_NEXT_TX_NEW.into(), execution::load_next_tx_new);
     hints.insert(execution::LOG_ENTER_SYSCALL.into(), execution::log_enter_syscall);
     hints.insert(execution::OS_CONTEXT_SEGMENTS.into(), execution::os_context_segments);
     hints.insert(execution::PREPARE_CONSTRUCTOR_EXECUTION.into(), execution::prepare_constructor_execution);

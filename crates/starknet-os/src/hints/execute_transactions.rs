@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
-    get_integer_from_var_name, get_ptr_from_var_name, insert_value_from_var_name,
+    get_integer_from_var_name, get_ptr_from_var_name, insert_value_from_var_name, insert_value_into_ap,
 };
 use cairo_vm::hint_processor::builtin_hint_processor::sha256_utils::sha256_finalize;
 use cairo_vm::hint_processor::hint_processor_definition::HintReference;
@@ -21,6 +21,20 @@ use crate::hints::vars;
 use crate::io::InternalTransaction;
 use crate::starknet::starknet_storage::PerContractStorage;
 use crate::utils::execute_coroutine;
+
+pub const SET_AP_TO_GAS_CAP: &str = "memory[ap] = to_felt_or_relocatable(ids.remaining_gas > ids.max_gas)";
+
+pub fn set_ap_to_gas_cap(
+    vm: &mut VirtualMachine,
+    _: &mut ExecutionScopes,
+    ids_data: &HashMap<String, HintReference>,
+    ap_tracking: &ApTracking,
+    _: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
+    let remaining_gas = get_integer_from_var_name(vars::ids::REMAINING_GAS, vm, ids_data, ap_tracking)?;
+    let max_gas = get_integer_from_var_name(vars::ids::MAX_GAS, vm, ids_data, ap_tracking)?;
+    insert_value_into_ap(vm, Felt252::from(remaining_gas > max_gas))
+}
 
 pub const START_TX_VALIDATE_DECLARE_EXECUTION_CONTEXT: &str = indoc! {r#"
     execution_helper.start_tx(

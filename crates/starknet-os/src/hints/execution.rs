@@ -39,6 +39,92 @@ use crate::starkware_utils::commitment_tree::base_types::DescentMap;
 use crate::starkware_utils::commitment_tree::update_tree::{DecodeNodeCase, TreeUpdate, UpdateTree};
 use crate::utils::{custom_hint_error, execute_coroutine, get_constant};
 
+pub const LOAD_NEXT_TX_NEW: &str = indoc! {r#"
+    from src.starkware.starknet.core.os.transaction_hash.transaction_hash import (
+        create_resource_bounds_list,
+    )
+    tx = next(transactions)
+    assert tx.tx_type.name in ('INVOKE_FUNCTION', 'L1_HANDLER', 'DEPLOY_ACCOUNT', 'DECLARE'), (
+        f"Unexpected transaction type: {tx.type.name}."
+    )
+
+    tx_type_bytes = tx.tx_type.name.encode("ascii")
+    ids.tx_type = int.from_bytes(tx_type_bytes, "big")
+    execution_helper.os_logger.enter_tx(
+        tx=tx,
+        n_steps=current_step,
+        builtin_ptrs=ids.builtin_ptrs,
+        range_check_ptr=ids.range_check_ptr,
+    )
+
+    # Prepare a short callable to save code duplication.
+    exit_tx = lambda: execution_helper.os_logger.exit_tx(
+        n_steps=current_step,
+        builtin_ptrs=ids.builtin_ptrs,
+        range_check_ptr=ids.range_check_ptr,
+    )
+
+    # Guess the resource bounds.
+    if tx.tx_type.name == 'L1_HANDLER' or tx.version < 3:
+        ids.resource_bounds = 0
+        ids.n_resource_bounds = 0
+    else:
+        ids.resource_bounds = segments.gen_arg(create_resource_bounds_list(tx.resource_bounds))
+        ids.n_resource_bounds = len(tx.resource_bounds)"#
+};
+
+pub fn load_next_tx_new(
+    vm: &mut VirtualMachine,
+    exec_scopes: &mut ExecutionScopes,
+    ids_data: &HashMap<String, HintReference>,
+    ap_tracking: &ApTracking,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
+    let mut transactions = exec_scopes.get::<IntoIter<InternalTransaction>>(vars::scopes::TRANSACTIONS)?;
+    // Safe to unwrap because the remaining number of txs is checked in the cairo code.
+    let tx = transactions.next().unwrap();
+    if let Some(address) = tx.sender_address {
+        log::debug!("executing {} on: {}", tx.r#type, address);
+    }
+    exec_scopes.insert_value(vars::scopes::TRANSACTIONS, transactions);
+    exec_scopes.insert_value(vars::scopes::TX, tx.clone());
+    insert_value_from_var_name(
+        vars::ids::TX_TYPE,
+        Felt252::from_bytes_be_slice(tx.r#type.as_bytes()),
+        vm,
+        ids_data,
+        ap_tracking,
+    )?;
+
+    // # Guess the resource bounds.
+    // if tx.tx_type.name == 'L1_HANDLER' or tx.version < 3:
+    //     ids.resource_bounds = 0
+    //     ids.n_resource_bounds = 0
+    // else:
+    //     ids.resource_bounds = segments.gen_arg(create_resource_bounds_list(tx.resource_bounds))
+    //     ids.n_resource_bounds = len(tx.resource_bounds)"#
+
+    let (resource_bounds, n_resource_bounds) = if &tx.r#type == "L1_HANDLER"
+        || tx.version.is_some_and(|v| v < Felt252::THREE)
+    {
+        (MaybeRelocatable::Int(Felt252::ZERO), MaybeRelocatable::Int(Felt252::ZERO))
+    } else {
+        let resource_bounds = tx.resource_bounds.ok_or(custom_hint_error("tx.resource_bounds is None"))?;
+        let resource_bounds =
+            create_resource_bounds_list(&resource_bounds).into_iter().map(MaybeRelocatable::Int).collect::<Vec<_>>();
+
+        let n_resource_bounds = MaybeRelocatable::Int(Felt252::from(resource_bounds.len()));
+        let resource_bounds_ptr = vm.gen_arg(&resource_bounds)?;
+
+        (resource_bounds_ptr, n_resource_bounds)
+    };
+
+    insert_value_from_var_name(vars::ids::RESOURCE_BOUNDS, resource_bounds, vm, ids_data, ap_tracking)?;
+    insert_value_from_var_name(vars::ids::N_RESOURCE_BOUNDS, n_resource_bounds, vm, ids_data, ap_tracking)?;
+
+    Ok(())
+}
+
 pub const LOAD_NEXT_TX: &str = indoc! {r#"
         tx = next(transactions)
         assert tx.tx_type.name in ('INVOKE_FUNCTION', 'L1_HANDLER', 'DEPLOY_ACCOUNT', 'DECLARE'), (
@@ -172,7 +258,6 @@ pub fn assert_transaction_hash(
 ) -> Result<(), HintError> {
     let tx = exec_scopes.get::<InternalTransaction>(vars::scopes::TX)?;
     let transaction_hash = get_integer_from_var_name(vars::ids::TRANSACTION_HASH, vm, ids_data, ap_tracking)?;
-
 
     assert_eq!(
         tx.hash_value,

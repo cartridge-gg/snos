@@ -2,14 +2,13 @@ use core::panic;
 use std::any::Any;
 use std::collections::hash_map::IntoIter;
 use std::collections::HashMap;
-use std::env::consts::OS;
 use std::rc::Rc;
 
 use blockifier::context::BlockContext;
 use cairo_vm::hint_processor::builtin_hint_processor::dict_manager::Dictionary;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
-    get_integer_from_var_name, get_maybe_relocatable_from_var_name, get_ptr_from_var_name,
-    get_relocatable_from_var_name, insert_value_from_var_name, insert_value_into_ap,
+    get_maybe_relocatable_from_var_name, get_ptr_from_var_name, get_relocatable_from_var_name,
+    insert_value_from_var_name, insert_value_into_ap,
 };
 use cairo_vm::hint_processor::hint_processor_definition::{HintExtension, HintProcessor, HintReference};
 use cairo_vm::serde::deserialize_program::ApTracking;
@@ -24,7 +23,7 @@ use starknet_os_types::chain_id::chain_id_to_felt;
 
 use crate::cairo_types::structs::{CompiledClass, CompiledClassFact};
 use crate::hints::vars;
-use crate::io::classes::{get_class_bytecode, load_casm_entrypoints, write_class};
+use crate::io::classes::{load_casm_entrypoints, write_class};
 use crate::io::input::StarknetOsInput;
 use crate::starknet::core::os::contract_class::compiled_class_hash_objects::BytecodeSegmentStructureImpl;
 use crate::utils::{custom_hint_error, get_constant};
