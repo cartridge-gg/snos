@@ -275,7 +275,8 @@ type ExtensiveHintImpl = fn(
     &ApTracking,
 ) -> Result<HintExtension, HintError>;
 
-static EXTENSIVE_HINTS: [(&str, ExtensiveHintImpl); 2] = [
+static EXTENSIVE_HINTS: [(&str, ExtensiveHintImpl); 3] = [
+    (block_context::GUESS_CLASS_FACTS, block_context::guess_class_facts),
     (block_context::LOAD_CLASS, block_context::load_class),
     (deprecated_compiled_class::LOAD_DEPRECATED_CLASS, deprecated_compiled_class::load_deprecated_class),
 ];

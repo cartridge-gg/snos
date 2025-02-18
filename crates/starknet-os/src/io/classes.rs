@@ -95,7 +95,7 @@ pub fn get_deprecated_contract_class_struct(
     Ok(())
 }
 
-fn load_casm_entrypoints(
+pub fn load_casm_entrypoints(
     vm: &mut VirtualMachine,
     base: Relocatable,
     entry_points: &[CasmContractEntryPoint],
@@ -222,6 +222,30 @@ pub fn create_bytecode_segment_structure(
     }
 
     Ok(res)
+}
+
+pub fn get_class_bytecode(
+    vm: &mut VirtualMachine,
+    class_base: Relocatable,
+    class: GenericCasmContractClass,
+) -> Result<Vec<Felt252>, HintError> {
+    let version = Felt252::from_hex("0x434f4d50494c45445f434c4153535f5631").unwrap();
+    vm.insert_value(class_base, version)?; // COMPILED_CLASS_V1
+
+    let cairo_lang_class = class.to_cairo_lang_contract_class().map_err(|e| custom_hint_error(e.to_string()))?;
+    load_casm_entrypoints(vm, (class_base + 1)?, &cairo_lang_class.entry_points_by_type.external)?;
+    load_casm_entrypoints(vm, (class_base + 3)?, &cairo_lang_class.entry_points_by_type.l1_handler)?;
+    load_casm_entrypoints(vm, (class_base + 5)?, &cairo_lang_class.entry_points_by_type.constructor)?;
+
+    let bytecode: Vec<Felt252> = cairo_lang_class.bytecode.iter().map(|x| Felt252::from(&x.value)).collect();
+    let data: Vec<MaybeRelocatable> = bytecode.into_iter().map(MaybeRelocatable::from).collect();
+
+    vm.insert_value((class_base + 7)?, Felt252::from(data.len()))?;
+    let data_base = vm.add_memory_segment();
+    vm.load_data(data_base, &data)?;
+    vm.insert_value((class_base + 8)?, data_base)?;
+
+    todo!()
 }
 
 pub fn write_class(

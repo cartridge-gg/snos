@@ -2,12 +2,14 @@ use core::panic;
 use std::any::Any;
 use std::collections::hash_map::IntoIter;
 use std::collections::HashMap;
+use std::env::consts::OS;
 use std::rc::Rc;
 
 use blockifier::context::BlockContext;
 use cairo_vm::hint_processor::builtin_hint_processor::dict_manager::Dictionary;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
-    get_ptr_from_var_name, get_relocatable_from_var_name, insert_value_from_var_name, insert_value_into_ap,
+    get_integer_from_var_name, get_maybe_relocatable_from_var_name, get_ptr_from_var_name,
+    get_relocatable_from_var_name, insert_value_from_var_name, insert_value_into_ap,
 };
 use cairo_vm::hint_processor::hint_processor_definition::{HintExtension, HintProcessor, HintReference};
 use cairo_vm::serde::deserialize_program::ApTracking;
@@ -22,7 +24,7 @@ use starknet_os_types::chain_id::chain_id_to_felt;
 
 use crate::cairo_types::structs::{CompiledClass, CompiledClassFact};
 use crate::hints::vars;
-use crate::io::classes::write_class;
+use crate::io::classes::{get_class_bytecode, load_casm_entrypoints, write_class};
 use crate::io::input::StarknetOsInput;
 use crate::starknet::core::os::contract_class::compiled_class_hash_objects::BytecodeSegmentStructureImpl;
 use crate::utils::{custom_hint_error, get_constant};
@@ -133,6 +135,165 @@ pub fn bytecode_segment_structure(
         any_box!(bytecode_segment_structure),
     )]));
     Ok(())
+}
+
+pub const GUESS_CLASS_FACTS: &str = indoc! {r#"
+    from starkware.starknet.core.os.contract_class.compiled_class_hash import (
+        create_bytecode_segment_structure,
+        get_compiled_class_struct,
+    )
+
+    ids.n_compiled_class_facts = len(os_input.compiled_classes)
+    ids.compiled_class_facts = (compiled_class_facts_end := segments.add())
+    for i, (compiled_class_hash, compiled_class) in enumerate(
+        os_input.compiled_classes.items()
+    ):
+        # Load the compiled class.
+        cairo_contract = get_compiled_class_struct(
+            identifiers=ids._context.identifiers,
+            compiled_class=compiled_class,
+            # Load the entire bytecode - the unaccessed segments will be overriden and skipped
+            # after the execution, in `validate_compiled_class_facts_post_execution`.
+            bytecode=compiled_class.bytecode,
+        )
+        segments.load_data(
+            ptr=ids.compiled_class_facts[i].address_,
+            data=(compiled_class_hash, segments.gen_arg(cairo_contract))
+        )
+
+        bytecode_ptr = ids.compiled_class_facts[i].compiled_class.bytecode_ptr
+        # Compiled classes are expected to end with a `ret` opcode followed by a pointer to
+        # the builtin costs.
+        segments.load_data(
+            ptr=bytecode_ptr + cairo_contract.bytecode_length,
+            data=[0x208b7fff7fff7ffe, ids.builtin_costs]
+        )
+
+        # Load hints and debug info.
+        vm_load_program(
+            compiled_class.get_runnable_program(entrypoint_builtins=[]), bytecode_ptr)"#
+};
+
+pub fn guess_class_facts(
+    _hint_processor: &dyn HintProcessor,
+    vm: &mut VirtualMachine,
+    exec_scopes: &mut ExecutionScopes,
+    ids_data: &HashMap<String, HintReference>,
+    ap_tracking: &ApTracking,
+) -> Result<HintExtension, HintError> {
+    let mut hint_extension = HintExtension::new();
+
+    // ids.n_compiled_class_facts = len(os_input.compiled_classes)
+    let os_input: Rc<StarknetOsInput> = exec_scopes.get::<Rc<StarknetOsInput>>(vars::scopes::OS_INPUT)?.clone();
+    insert_value_from_var_name(
+        vars::ids::N_COMPILED_CLASS_FACTS,
+        os_input.compiled_classes.len(),
+        vm,
+        ids_data,
+        ap_tracking,
+    )?;
+
+    // ids.compiled_class_facts = (compiled_class_facts_end := segments.add())
+    let compiled_class_facts_ptr = vm.add_memory_segment();
+    insert_value_from_var_name(vars::ids::COMPILED_CLASS_FACTS, compiled_class_facts_ptr, vm, ids_data, ap_tracking)?;
+
+    let mut next_class_facts_ptr = compiled_class_facts_ptr;
+    for (class_hash, class) in &os_input.compiled_classes {
+        // Load the compiled class.
+
+        let class = class.clone().to_cairo_lang_contract_class().map_err(|e| custom_hint_error(e.to_string()))?;
+
+        // cairo_contract = get_compiled_class_struct(
+        //     identifiers=ids._context.identifiers,
+        //     compiled_class=compiled_class,
+        //     # Load the entire bytecode - the unaccessed segments will be overriden and skipped
+        //     # after the execution, in `validate_compiled_class_facts_post_execution`.
+        //     bytecode=compiled_class.bytecode,
+        // )
+        let cairo_contract_start_base = vm.add_memory_segment();
+        let cairo_contract_end: Relocatable;
+        {
+            // CompiledClass struct layout in memory:
+            // [0] compiled_class_version - Version identifier for the compiled class format
+            // [1] n_external_functions - Number of external functions
+            // [2] external_functions - Pointer to external functions data
+            // [3] n_l1_handlers - Number of L1 handler functions
+            // [4] l1_handlers - Pointer to L1 handler functions data
+            // [5] n_constructors - Number of constructor functions
+            // [6] constructors - Pointer to constructor functions data
+            // [7] bytecode_length - Length of the contract bytecode
+            // [8] bytecode_ptr - Pointer to contract bytecode segment
+
+            // Set the compiled class version identifier (COMPILED_CLASS_V1)
+            let version = Felt252::from_hex("0x434f4d50494c45445f434c4153535f5631").unwrap();
+            vm.insert_value(cairo_contract_start_base, version)?; // [0]
+
+            // Convert class to Cairo lang format and load entry points
+
+            // Load external function entry points at [1] (len) and [2] (data)
+            load_casm_entrypoints(vm, (cairo_contract_start_base + 1)?, &class.entry_points_by_type.external)?;
+            // Load L1 handler entry points at [3] (len) and [4] (data)
+            load_casm_entrypoints(vm, (cairo_contract_start_base + 3)?, &class.entry_points_by_type.l1_handler)?;
+            // Load constructor entry points at [5] (len) and [6] (data)
+            load_casm_entrypoints(vm, (cairo_contract_start_base + 5)?, &class.entry_points_by_type.constructor)?;
+
+            // Convert bytecode to Felt252 format
+            let bytecode: Vec<Felt252> = class.bytecode.iter().map(|x| Felt252::from(&x.value)).collect();
+            let bytecode: Vec<MaybeRelocatable> = bytecode.into_iter().map(MaybeRelocatable::from).collect();
+
+            // Create new segment for bytecode and store pointer at [8]
+            let bytecode_base_addr = vm.add_memory_segment();
+            vm.load_data(bytecode_base_addr, &bytecode)?;
+            vm.insert_value((cairo_contract_start_base + 7)?, Felt252::from(bytecode.len()))?;
+            vm.insert_value((cairo_contract_start_base + 8)?, bytecode_base_addr)?;
+
+            cairo_contract_end = (cairo_contract_start_base + 9)?;
+        }
+
+        // segments.load_data(
+        //     ptr=ids.compiled_class_facts[i].address_,
+        //     data=(compiled_class_hash, segments.gen_arg(cairo_contract))
+        // )
+        //
+        // The Cairo definition of the CompiledClassFact struct:
+        //
+        // A list entry that maps a hash to the corresponding contract classes.
+        // struct CompiledClassFact {
+        //     // The hash of the contract. This member should be first, so that we can lookup items
+        //     // with the hash as key, using find_element().
+        //     hash: felt,
+        //     compiled_class: CompiledClass*,
+        // }
+        //
+        let next_ptr = vm.load_data(next_class_facts_ptr, &[class_hash.into(), cairo_contract_start_base.into()])?;
+        next_class_facts_ptr = next_ptr;
+
+        // bytecode_ptr = ids.compiled_class_facts[i].compiled_class.bytecode_ptr
+        //
+        // # Compiled classes are expected to end with a `ret` opcode followed by a pointer to
+        // # the builtin costs.
+        // segments.load_data(
+        //     ptr=bytecode_ptr + cairo_contract.bytecode_length,
+        //     data=[0x208b7fff7fff7ffe, ids.builtin_costs]
+        // )
+
+        let builtin_costs = get_maybe_relocatable_from_var_name(vars::ids::BUILTIN_COSTS, vm, ids_data, ap_tracking)?;
+        let ret_opcode = Felt252::from_hex("0x208b7fff7fff7ffe").unwrap();
+        vm.load_data(cairo_contract_end, &[ret_opcode.into(), builtin_costs])?;
+
+        // # Load hints and debug info.
+        // vm_load_program(
+        //     compiled_class.get_runnable_program(entrypoint_builtins=[]), bytecode_ptr)"#
+
+        let bytecode_ptr = (cairo_contract_start_base + CompiledClass::bytecode_ptr_offset())?;
+
+        for (rel_pc, hints) in class.hints.into_iter() {
+            let abs_pc = Relocatable::from((bytecode_ptr.segment_index, rel_pc));
+            hint_extension.insert(abs_pc, hints.iter().map(|h| any_box!(h.clone())).collect());
+        }
+    }
+
+    Ok(hint_extension)
 }
 
 pub const LOAD_CLASS: &str = indoc! {r#"
