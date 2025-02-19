@@ -170,7 +170,7 @@ async fn declare_v0_to_blockifier(
         class_hash: starknet_api::core::ClassHash(tx.class_hash),
         sender_address: starknet_api::core::ContractAddress(PatriciaKey::try_from(tx.sender_address)?),
     });
-    let class_info = dbg!(create_class_info(tx.class_hash, client, block_number).await)?;
+    let class_info = create_class_info(tx.class_hash, client, block_number).await?;
     let declare = starknet_api::executable_transaction::AccountTransaction::Declare(
         starknet_api::executable_transaction::DeclareTransaction { tx: api_tx, tx_hash, class_info },
     );

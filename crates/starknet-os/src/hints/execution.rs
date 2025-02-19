@@ -1044,6 +1044,25 @@ where
     insert_value_into_ap(vm, Felt252::from(is_reverted))
 }
 
+pub const DEBUG_REMAINING_GAS: &str = indoc! {r#"
+    if execution_helper.debug_mode:
+        expected_initial_gas = execution_helper.call_info.call.initial_gas
+        call_initial_gas = ids.remaining_gas
+        assert expected_initial_gas == call_initial_gas, (
+            f"Expected remaining_gas {expected_initial_gas}. Got: {call_initial_gas}.\n"
+            f"{execution_helper.call_info=}"
+        )"#};
+
+pub fn debug_remaining_gas(
+    _: &mut VirtualMachine,
+    _: &mut ExecutionScopes,
+    _: &HashMap<String, HintReference>,
+    _: &ApTracking,
+    _: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
+    Ok(())
+}
+
 pub const CHECK_EXECUTION: &str = indoc! {r#"
     return_values = ids.entry_point_return_values
     if return_values.failure_flag != 0:
