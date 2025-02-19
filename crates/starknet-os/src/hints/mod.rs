@@ -144,6 +144,7 @@ fn hints<PCS>() -> HashMap<String, HintImpl> where
     hints.insert(execution::INITIAL_GE_REQUIRED_GAS.into(), execution::initial_ge_required_gas);
     hints.insert(execution::IS_DEPRECATED.into(), execution::is_deprecated);
     hints.insert(execution::IS_REVERTED.into(), execution::is_reverted::<PCS>);
+    hints.insert(execution::SIERRA_GAS_MODE.into(), execution::sierra_gas_mode::<PCS>);
     hints.insert(execution::LOAD_NEXT_TX.into(), execution::load_next_tx);
     hints.insert(execution::LOAD_NEXT_TX_NEW.into(), execution::load_next_tx_new);
     hints.insert(execution::LOG_ENTER_SYSCALL.into(), execution::log_enter_syscall);

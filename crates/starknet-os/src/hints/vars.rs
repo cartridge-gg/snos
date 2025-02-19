@@ -178,6 +178,7 @@ pub mod ids {
     pub const ELM_BOUND: &str = "elm_bound";
     pub const REMAINING_GAS: &str = "remaining_gas";
     pub const MAX_GAS: &str = "max_gas";
+    pub const IS_SIERRA_GAS_MODE: &str = "is_sierra_gas_mode";
 }
 
 pub mod constants {

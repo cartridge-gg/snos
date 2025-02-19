@@ -4,6 +4,7 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use std::vec::IntoIter;
 
+use blockifier::execution::contract_class::TrackedResource;
 use cairo_vm::hint_processor::builtin_hint_processor::dict_manager::Dictionary;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
     get_integer_from_var_name, get_maybe_relocatable_from_var_name, get_ptr_from_var_name, insert_value_from_var_name,
@@ -42,6 +43,19 @@ use crate::utils::{custom_hint_error, execute_coroutine, get_constant};
 pub const SIERRA_GAS_MODE: &str =
     "ids.is_sierra_gas_mode = execution_helper.call_info.tracked_resource.is_sierra_gas()";
 
+pub fn sierra_gas_mode<PCS>(
+    vm: &mut VirtualMachine,
+    exec_scopes: &mut ExecutionScopes,
+    ids_data: &HashMap<String, HintReference>,
+    ap_tracking: &ApTracking,
+    _: &HashMap<String, Felt252>,
+) -> Result<(), HintError>
+where
+    PCS: PerContractStorage + 'static,
+{
+    execute_coroutine(sierra_gas_mode_async::<PCS>(vm, exec_scopes, ids_data, ap_tracking))?
+}
+
 pub async fn sierra_gas_mode_async<PCS>(
     vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
@@ -51,10 +65,14 @@ pub async fn sierra_gas_mode_async<PCS>(
 where
     PCS: PerContractStorage + 'static,
 {
-    // let execution_helper = exec_scopes.get::<ExecutionHelperWrapper<PCS>>(vars::scopes::EXECUTION_HELPER)?;
-    // execution_helper.execution_helper.read().await.call_info.unwrap(). resources.is_
+    let execution_helper = exec_scopes.get::<ExecutionHelperWrapper<PCS>>(vars::scopes::EXECUTION_HELPER)?;
+    let is_sierra_gas =
+        match execution_helper.execution_helper.read().await.call_info.as_ref().unwrap().tracked_resource {
+            TrackedResource::CairoSteps => Felt252::ZERO,
+            TrackedResource::SierraGas => Felt252::ONE,
+        };
 
-    todo!()
+    insert_value_from_var_name(vars::ids::IS_SIERRA_GAS_MODE, is_sierra_gas, vm, ids_data, ap_tracking)
 }
 
 pub const LOAD_NEXT_TX_NEW: &str = indoc! {r#"
