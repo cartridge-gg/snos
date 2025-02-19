@@ -1,13 +1,13 @@
 #[cfg(test)]
 pub mod tests {
     use blockifier::context::BlockContext;
-    use blockifier::fee::actual_cost::TransactionReceipt;
+    use blockifier::fee::receipt::TransactionReceipt;
     use blockifier::transaction::objects::TransactionExecutionInfo;
     use cairo_vm::serde::deserialize_program::ApTracking;
     use cairo_vm::types::exec_scope::ExecutionScopes;
     use num_bigint::BigInt;
     use rstest::{fixture, rstest};
-    use starknet_api::transaction::Fee;
+    use starknet_api::transaction::fields::Fee;
     use vars::ids::{ARRAY_PTR, ELM_SIZE, EXISTS, INDEX, KEY, N_ELMS};
 
     use crate::config::STORED_BLOCK_HASH_BUFFER;
@@ -66,7 +66,7 @@ pub mod tests {
             execute_call_info: None,
             fee_transfer_call_info: None,
             revert_error: None,
-            transaction_receipt: TransactionReceipt {
+            receipt: TransactionReceipt {
                 fee: Fee(1234),
                 gas: Default::default(),
                 da_gas: Default::default(),

@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use blockifier::context::BlockContext;
-use blockifier::execution::contract_class::ContractClass::{V0, V1};
+use blockifier::execution::contract_class::RunnableCompiledClass;
 use blockifier::state::cached_state::{CachedState, CommitmentStateDiff};
 use blockifier::state::state_api::StateReader;
 use blockifier::transaction::objects::TransactionExecutionInfo;
@@ -55,7 +55,7 @@ where
 
     // provide an empty ContractState for any newly deployed contract
     let state_diff =
-        CommitmentStateDiff::from(blockifier_state.to_state_diff().expect("unable to generate state diff"));
+        CommitmentStateDiff::from(blockifier_state.to_state_diff().expect("unable to generate state diff").state_maps);
     let deployed_addresses = state_diff.address_to_class_hash;
     for (address, _class_hash) in &deployed_addresses {
         contracts.insert(
@@ -78,10 +78,10 @@ where
         let address = ContractAddress(PatriciaKey::try_from(*c).unwrap());
         let class_hash = blockifier_state.get_class_hash_at(address).unwrap();
         contract_address_to_class_hash.insert(Felt252::from(address), class_hash.0);
-        let blockifier_class = blockifier_state.get_compiled_contract_class(class_hash).unwrap();
+        let blockifier_class = blockifier_state.get_compiled_class(class_hash).unwrap();
         match blockifier_class {
-            V0(_) => {} // deprecated_compiled_classes are passed in by caller
-            V1(_) => {
+            RunnableCompiledClass::V0(_) => {} // deprecated_compiled_classes are passed in by caller
+            RunnableCompiledClass::V1(_) => {
                 let compiled_class =
                     compiled_classes.get(&class_hash).unwrap_or_else(|| panic!("No class given for {:?}", class_hash));
                 let compiled_class_hash = compiled_class.class_hash().expect("Failed to compute class hash");

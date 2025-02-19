@@ -39,6 +39,24 @@ use crate::starkware_utils::commitment_tree::base_types::DescentMap;
 use crate::starkware_utils::commitment_tree::update_tree::{DecodeNodeCase, TreeUpdate, UpdateTree};
 use crate::utils::{custom_hint_error, execute_coroutine, get_constant};
 
+pub const SIERRA_GAS_MODE: &str =
+    "ids.is_sierra_gas_mode = execution_helper.call_info.tracked_resource.is_sierra_gas()";
+
+pub async fn sierra_gas_mode_async<PCS>(
+    vm: &mut VirtualMachine,
+    exec_scopes: &mut ExecutionScopes,
+    ids_data: &HashMap<String, HintReference>,
+    ap_tracking: &ApTracking,
+) -> Result<(), HintError>
+where
+    PCS: PerContractStorage + 'static,
+{
+    // let execution_helper = exec_scopes.get::<ExecutionHelperWrapper<PCS>>(vars::scopes::EXECUTION_HELPER)?;
+    // execution_helper.execution_helper.read().await.call_info.unwrap(). resources.is_
+
+    todo!()
+}
+
 pub const LOAD_NEXT_TX_NEW: &str = indoc! {r#"
     from src.starkware.starknet.core.os.transaction_hash.transaction_hash import (
         create_resource_bounds_list,
@@ -568,9 +586,7 @@ where
 }
 
 #[rustfmt::skip]
-pub const ENTER_CALL: &str = indoc! {r#"
-execution_helper.enter_call(
-    cairo_execution_info=ids.execution_context.execution_info)"#};
+pub const ENTER_CALL: &str = "execution_helper.enter_call(cairo_execution_info=ids.execution_context.execution_info)";
 
 pub async fn enter_call_async<PCS>(
     vm: &mut VirtualMachine,
@@ -795,7 +811,8 @@ pub fn tx_resource_bounds_len(
     let resource_bounds = if version < Felt252::THREE {
         Felt252::ZERO
     } else {
-        tx.resource_bounds.ok_or(custom_hint_error("tx.resource_bounds is None"))?.0.len().into()
+        let resource_bounds = tx.resource_bounds.ok_or(custom_hint_error("tx.resource_bounds is None"))?;
+        create_resource_bounds_list(&resource_bounds).len().into()
     };
     insert_value_into_ap(vm, resource_bounds)
 }

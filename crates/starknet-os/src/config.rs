@@ -1,17 +1,17 @@
 use std::fs::File;
 use std::path::PathBuf;
 
-use blockifier::blockifier::block::{BlockInfo, GasPrices};
+// use blockifier::blockifier::block::{BlockInfo, GasPrices};
 use blockifier::bouncer::BouncerConfig;
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses};
-use blockifier::transaction::objects::FeeType;
+// use blockifier::transaction::objects::FeeType;
 use blockifier::versioned_constants::VersionedConstants;
 use cairo_vm::types::layout_name::LayoutName;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use starknet_api::block::{BlockNumber, BlockTimestamp};
-use starknet_api::core::{ChainId, ContractAddress, PatriciaKey};
-use starknet_api::{contract_address, felt, patricia_key};
+use starknet_api::block::{BlockInfo, BlockNumber, BlockTimestamp, FeeType, GasPriceVector, GasPrices};
+use starknet_api::contract_address;
+use starknet_api::core::{ChainId, ContractAddress};
 
 use crate::error::SnOsError;
 
@@ -121,10 +121,16 @@ impl StarknetGeneralConfig {
 
             sequencer_address: self.sequencer_address,
             gas_prices: GasPrices {
-                eth_l1_gas_price: 1u128.try_into().unwrap(), // TODO: update with 4844
-                strk_l1_gas_price: 1u128.try_into().unwrap(),
-                eth_l1_data_gas_price: 1u128.try_into().unwrap(),
-                strk_l1_data_gas_price: 1u128.try_into().unwrap(),
+                eth_gas_prices: GasPriceVector {
+                    l1_gas_price: 1u128.try_into().unwrap(),
+                    l2_gas_price: 1u128.try_into().unwrap(),
+                    l1_data_gas_price: 1u128.try_into().unwrap(),
+                },
+                strk_gas_prices: GasPriceVector {
+                    l1_gas_price: 1u128.try_into().unwrap(),
+                    l2_gas_price: 1u128.try_into().unwrap(),
+                    l1_data_gas_price: 1u128.try_into().unwrap(),
+                },
             },
             use_kzg_da: false,
         };

@@ -1,7 +1,5 @@
-use blockifier::blockifier::block::GasPrices;
 use blockifier::state::cached_state::CachedState;
 use blockifier::transaction::transactions::ExecutableTransaction as _;
-use blockifier::versioned_constants::StarknetVersion;
 use rpc_client::RpcClient;
 use rpc_replay::block_context::build_block_context;
 use rpc_replay::rpc_state_reader::AsyncRpcStateReader;
@@ -9,6 +7,7 @@ use rpc_replay::transactions::starknet_rs_to_blockifier;
 use rstest::rstest;
 use starknet::core::types::{BlockId, BlockWithTxs};
 use starknet::providers::Provider;
+use starknet_api::block::{GasPriceVector, GasPrices, StarknetVersion};
 use starknet_api::core::ChainId;
 
 #[rstest]
@@ -37,16 +36,22 @@ async fn test_replay_block() {
         .await
         .expect("Failed to get block tx traces");
     let gas_prices = GasPrices {
-        eth_l1_gas_price: 1u128.try_into().unwrap(),
-        strk_l1_gas_price: 1u128.try_into().unwrap(),
-        eth_l1_data_gas_price: 1u128.try_into().unwrap(),
-        strk_l1_data_gas_price: 1u128.try_into().unwrap(),
+        eth_gas_prices: GasPriceVector {
+            l1_gas_price: 1u128.try_into().unwrap(),
+            l1_data_gas_price: 1u128.try_into().unwrap(),
+            l2_gas_price: 1u128.try_into().unwrap(),
+        },
+        strk_gas_prices: GasPriceVector {
+            l1_gas_price: 1u128.try_into().unwrap(),
+            l1_data_gas_price: 1u128.try_into().unwrap(),
+            l2_gas_price: 1u128.try_into().unwrap(),
+        },
     };
 
     for (tx, trace) in block_with_txs.transactions.iter().zip(traces.iter()) {
         let blockifier_tx =
             starknet_rs_to_blockifier(tx, trace, &gas_prices, &rpc_client, previous_block_number).await.unwrap();
-        let tx_result = blockifier_tx.execute(&mut state, &block_context, true, true, true);
+        let tx_result = blockifier_tx.execute(&mut state, &block_context);
 
         match tx_result {
             Err(e) => {

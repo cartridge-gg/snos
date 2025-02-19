@@ -1,14 +1,15 @@
 use std::collections::HashMap;
 
 use blockifier::context::BlockContext;
-use blockifier::invoke_tx_args;
-use blockifier::test_utils::{create_calldata, NonceManager};
+use blockifier::test_utils::create_calldata;
 use blockifier::transaction::test_utils;
 use blockifier::transaction::test_utils::max_fee;
 use cairo_vm::Felt252;
 use rstest::rstest;
-use starknet_api::felt;
-use starknet_api::transaction::{Fee, TransactionVersion};
+use starknet_api::test_utils::NonceManager;
+use starknet_api::transaction::fields::Fee;
+use starknet_api::transaction::TransactionVersion;
+use starknet_api::{felt, invoke_tx_args};
 use starknet_os::config::STORED_BLOCK_HASH_BUFFER;
 
 use crate::common::block_context;

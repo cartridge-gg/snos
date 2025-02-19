@@ -70,7 +70,9 @@ pub async fn unpack_blockifier_state_async<S: Storage + Send + Sync, H: HashFunc
     let final_state = {
         let state = blockifier_state.state.clone();
         state
-            .apply_commitment_state_diff(blockifier_state.to_state_diff().expect("failed to build state diff").into())
+            .apply_commitment_state_diff(
+                blockifier_state.to_state_diff().expect("failed to build state diff").state_maps.into(),
+            )
             .await?
     };
 

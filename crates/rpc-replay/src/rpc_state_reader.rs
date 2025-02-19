@@ -1,4 +1,4 @@
-use blockifier::execution::contract_class::ContractClass;
+use blockifier::execution::contract_class::RunnableCompiledClass;
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{StateReader, StateResult};
 use rpc_client::client::RpcClient;
@@ -75,7 +75,7 @@ impl AsyncRpcStateReader {
         }
     }
 
-    pub async fn get_compiled_contract_class_async(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
+    pub async fn get_compiled_contract_class_async(&self, class_hash: ClassHash) -> StateResult<RunnableCompiledClass> {
         if let Some(id) = self.block_id {
             let contract_class = match self.rpc_client.starknet_rpc().get_class(id, class_hash.0).await {
                 Ok(contract_class) => Ok(contract_class),
@@ -85,7 +85,7 @@ impl AsyncRpcStateReader {
                 Err(e) => Err(provider_error_to_state_error(e)),
             }?;
 
-            let contract_class: ContractClass = match contract_class {
+            let contract_class: RunnableCompiledClass = match contract_class {
                 starknet::core::types::ContractClass::Sierra(sierra_class) => {
                     let contract_class = GenericSierraContractClass::from(sierra_class);
                     let compiled_class = contract_class.compile().map_err(to_state_err)?;
@@ -147,7 +147,7 @@ impl StateReader for AsyncRpcStateReader {
             .map_err(|e| StateError::StateReadError(e.to_string()))?
     }
 
-    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
+    fn get_compiled_class(&self, class_hash: ClassHash) -> StateResult<RunnableCompiledClass> {
         execute_coroutine(self.get_compiled_contract_class_async(class_hash)).map_err(to_state_err)?
     }
 
