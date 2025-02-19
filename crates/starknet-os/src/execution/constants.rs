@@ -14,7 +14,6 @@ pub const MEMORY_HOLE_GAS_COST: u64 = 10;
 #[allow(unused)]
 pub const INITIAL_GAS_COST: u64 = 10_u64.pow(8) * STEP_GAS_COST;
 // Compiler gas costs.
-#[allow(unused)]
 pub const ENTRY_POINT_INITIAL_BUDGET: u64 = 100 * STEP_GAS_COST;
 // The initial gas budget for a system call (this value is hard-coded by the compiler).
 // This needs to be high enough to cover OS costs in the case of failure due to out of gas.

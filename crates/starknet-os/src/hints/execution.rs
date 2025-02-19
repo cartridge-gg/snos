@@ -26,6 +26,7 @@ use num_traits::ToPrimitive;
 use crate::cairo_types::new_syscalls;
 use crate::cairo_types::structs::{EntryPointReturnValues, ExecutionContext};
 use crate::cairo_types::syscalls::{CallContractResponse, StorageRead, StorageReadRequest, StorageWrite, TxInfo};
+use crate::execution::constants::ENTRY_POINT_INITIAL_BUDGET;
 use crate::execution::deprecated_syscall_handler::DeprecatedOsSyscallHandlerWrapper;
 use crate::execution::helper::ExecutionHelperWrapper;
 use crate::execution::syscall_handler::OsSyscallHandlerWrapper;
@@ -1042,6 +1043,21 @@ where
     })??;
 
     insert_value_into_ap(vm, Felt252::from(is_reverted))
+}
+
+pub const CHECK_REMAINING_GAS: &str =
+    "memory[ap] = to_felt_or_relocatable(ids.remaining_gas < ids.ENTRY_POINT_INITIAL_BUDGET)";
+
+pub fn check_remaining_gas(
+    vm: &mut VirtualMachine,
+    _: &mut ExecutionScopes,
+    ids_data: &HashMap<String, HintReference>,
+    ap_tracking: &ApTracking,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
+    let remaining_gas = get_integer_from_var_name(vars::ids::REMAINING_GAS, vm, ids_data, ap_tracking)?;
+    let entry_point_initial_budget = Felt252::from(ENTRY_POINT_INITIAL_BUDGET);
+    insert_value_into_ap(vm, Felt252::from(remaining_gas < entry_point_initial_budget))
 }
 
 pub const DEBUG_REMAINING_GAS: &str = indoc! {r#"
