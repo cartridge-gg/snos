@@ -425,7 +425,7 @@ dependencies = [
 [[package]]
 name = "blockifier"
 version = "0.0.0"
-source = "git+https://github.com/dojoengine/sequencer?rev=cc638d67#cc638d67ec7a1da77b36b90e34017939f3dbdb05"
+source = "git+https://github.com/dojoengine/sequencer?rev=391eee25#391eee25ddb225e1b601c6e93af93e14176d8530"
 dependencies = [
  "anyhow",
  "ark-ec",
@@ -2453,7 +2453,7 @@ checksum = "b248f5224d1d606005e02c97f5aa4e88eeb230488bcc03bc9ca4d7991399f2b5"
 [[package]]
 name = "infra_utils"
 version = "0.0.0"
-source = "git+https://github.com/dojoengine/sequencer?rev=cc638d67#cc638d67ec7a1da77b36b90e34017939f3dbdb05"
+source = "git+https://github.com/dojoengine/sequencer?rev=391eee25#391eee25ddb225e1b601c6e93af93e14176d8530"
 dependencies = [
  "tokio",
  "tracing",
@@ -3031,7 +3031,7 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 [[package]]
 name = "papyrus_config"
 version = "0.0.0"
-source = "git+https://github.com/dojoengine/sequencer?rev=cc638d67#cc638d67ec7a1da77b36b90e34017939f3dbdb05"
+source = "git+https://github.com/dojoengine/sequencer?rev=391eee25#391eee25ddb225e1b601c6e93af93e14176d8530"
 dependencies = [
  "clap",
  "infra_utils",
@@ -4663,7 +4663,7 @@ dependencies = [
 [[package]]
 name = "starknet_api"
 version = "0.0.0"
-source = "git+https://github.com/dojoengine/sequencer?rev=cc638d67#cc638d67ec7a1da77b36b90e34017939f3dbdb05"
+source = "git+https://github.com/dojoengine/sequencer?rev=391eee25#391eee25ddb225e1b601c6e93af93e14176d8530"
 dependencies = [
  "bitvec",
  "cairo-lang-runner",
