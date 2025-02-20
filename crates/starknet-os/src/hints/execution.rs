@@ -1045,6 +1045,49 @@ where
     insert_value_into_ap(vm, Felt252::from(is_reverted))
 }
 
+pub const VALIDATE_PREDICTED_GAS_COST: &str = indoc! {r#"
+    if execution_helper.debug_mode:
+        # Validate the predicted gas cost.
+        actual = ids.remaining_gas - ids.entry_point_return_values.gas_builtin
+        predicted = execution_helper.call_info.gas_consumed
+        if execution_helper.call_info.tracked_resource.is_sierra_gas():
+            predicted = predicted - ids.ENTRY_POINT_INITIAL_BUDGET
+            assert actual == predicted, (
+                "Predicted gas costs are inconsistent with the actual execution; "
+                f"{predicted=}, {actual=}."
+            )
+        else:
+            assert predicted == 0, "Predicted gas cost must be zero in CairoSteps mode."
+
+
+    # Exit call.
+    syscall_handler.validate_and_discard_syscall_ptr(
+        syscall_ptr_end=ids.entry_point_return_values.syscall_ptr
+    )
+    execution_helper.exit_call()"#
+};
+
+pub fn validate_predicted_gas_costs<PCS>(
+    vm: &mut VirtualMachine,
+    exec_scopes: &mut ExecutionScopes,
+    ids_data: &HashMap<String, HintReference>,
+    ap_tracking: &ApTracking,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError>
+where
+    PCS: PerContractStorage + 'static,
+{
+    let return_values_ptr = get_ptr_from_var_name(vars::ids::ENTRY_POINT_RETURN_VALUES, vm, ids_data, ap_tracking)?;
+    let syscall_ptr_end = vm.get_relocatable((return_values_ptr + EntryPointReturnValues::syscall_ptr_offset())?)?;
+    let syscall_handler = exec_scopes.get::<OsSyscallHandlerWrapper<PCS>>(vars::scopes::SYSCALL_HANDLER)?;
+    execute_coroutine(syscall_handler.validate_and_discard_syscall_ptr(syscall_ptr_end))??;
+
+    let mut execution_helper = exec_scopes.get::<ExecutionHelperWrapper<PCS>>(vars::scopes::EXECUTION_HELPER)?;
+    execute_coroutine(execution_helper.exit_call())?;
+
+    Ok(())
+}
+
 pub const CHECK_REMAINING_GAS: &str =
     "memory[ap] = to_felt_or_relocatable(ids.remaining_gas < ids.ENTRY_POINT_INITIAL_BUDGET)";
 

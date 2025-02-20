@@ -114,6 +114,7 @@ fn hints<PCS>() -> HashMap<String, HintImpl> where
     hints.insert(execution::CACHE_CONTRACT_STORAGE_REQUEST_KEY.into(), execution::cache_contract_storage_request_key::<PCS>);
     hints.insert(execution::CACHE_CONTRACT_STORAGE_SYSCALL_REQUEST_ADDRESS.into(), execution::cache_contract_storage_syscall_request_address::<PCS>);
     hints.insert(execution::CHECK_REMAINING_GAS.into(), execution::check_remaining_gas::<PCS>);
+    hints.insert(execution::VALIDATE_PREDICTED_GAS_COST.into(), execution::validate_predicted_gas_costs::<PCS>);
     hints.insert(execution::DEBUG_REMAINING_GAS.into(), execution::debug_remaining_gas);
     hints.insert(execution::CHECK_EXECUTION.into(), execution::check_execution::<PCS>);
     hints.insert(execution::CHECK_IS_DEPRECATED.into(), execution::check_is_deprecated);
