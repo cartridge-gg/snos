@@ -29,7 +29,7 @@ where
     let syscall_handler = exec_scopes.get::<DeprecatedOsSyscallHandlerWrapper<PCS>>(vars::scopes::SYSCALL_HANDLER)?;
     let syscall_ptr = get_ptr_from_var_name(vars::ids::SYSCALL_PTR, vm, ids_data, ap_tracking)?;
 
-    syscall_handler.call_contract(syscall_ptr, vm).await?;
+    dbg!(syscall_handler.call_contract(syscall_ptr, vm).await)?;
 
     Ok(())
 }

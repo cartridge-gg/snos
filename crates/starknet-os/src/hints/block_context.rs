@@ -196,8 +196,8 @@ pub fn guess_class_facts(
     let compiled_class_facts_ptr = vm.add_memory_segment();
     insert_value_from_var_name(vars::ids::COMPILED_CLASS_FACTS, compiled_class_facts_ptr, vm, ids_data, ap_tracking)?;
 
-    let mut next_class_facts_ptr = compiled_class_facts_ptr;
-    for (class_hash, class) in &os_input.compiled_classes {
+    // let mut next_class_facts_ptr = compiled_class_facts_ptr;
+    for (i, (hash, class)) in os_input.compiled_classes.iter().enumerate() {
         // Load the compiled class.
 
         let class = class.clone().to_cairo_lang_contract_class().map_err(|e| custom_hint_error(e.to_string()))?;
@@ -209,8 +209,7 @@ pub fn guess_class_facts(
         //     # after the execution, in `validate_compiled_class_facts_post_execution`.
         //     bytecode=compiled_class.bytecode,
         // )
-        let cairo_contract_start_base = vm.add_memory_segment();
-        let cairo_contract_end: Relocatable;
+        let contract_base_addr = vm.add_memory_segment();
         {
             // CompiledClass struct layout in memory:
             // [0] compiled_class_version - Version identifier for the compiled class format
@@ -225,16 +224,21 @@ pub fn guess_class_facts(
 
             // Set the compiled class version identifier (COMPILED_CLASS_V1)
             let version = Felt252::from_hex("0x434f4d50494c45445f434c4153535f5631").unwrap();
-            vm.insert_value(cairo_contract_start_base, version)?; // [0]
+            vm.insert_value(contract_base_addr, version)?; // [0]
 
             // Convert class to Cairo lang format and load entry points
 
             // Load external function entry points at [1] (len) and [2] (data)
-            load_casm_entrypoints(vm, (cairo_contract_start_base + 1)?, &class.entry_points_by_type.external)?;
+            load_casm_entrypoints(vm, (contract_base_addr + 1)?, &class.entry_points_by_type.external)?;
             // Load L1 handler entry points at [3] (len) and [4] (data)
-            load_casm_entrypoints(vm, (cairo_contract_start_base + 3)?, &class.entry_points_by_type.l1_handler)?;
+            load_casm_entrypoints(vm, (contract_base_addr + 3)?, &class.entry_points_by_type.l1_handler)?;
+
+            println!("--------------------------- Constructors ---------------------------");
             // Load constructor entry points at [5] (len) and [6] (data)
-            load_casm_entrypoints(vm, (cairo_contract_start_base + 5)?, &class.entry_points_by_type.constructor)?;
+            load_casm_entrypoints(vm, (contract_base_addr + 5)?, &class.entry_points_by_type.constructor)?;
+            println!("--------------------------------------------------------------------");
+
+            // CompiledClass
 
             // Convert bytecode to Felt252 format
             let bytecode: Vec<Felt252> = class.bytecode.iter().map(|x| Felt252::from(&x.value)).collect();
@@ -242,11 +246,20 @@ pub fn guess_class_facts(
 
             // Create new segment for bytecode and store pointer at [8]
             let bytecode_base_addr = vm.add_memory_segment();
+            dbg!(&bytecode_base_addr);
             vm.load_data(bytecode_base_addr, &bytecode)?;
-            vm.insert_value((cairo_contract_start_base + 7)?, Felt252::from(bytecode.len()))?;
-            vm.insert_value((cairo_contract_start_base + 8)?, bytecode_base_addr)?;
+            vm.insert_value((contract_base_addr + 7)?, Felt252::from(bytecode.len()))?;
+            vm.insert_value((contract_base_addr + 8)?, bytecode_base_addr)?;
 
-            cairo_contract_end = (cairo_contract_start_base + 9)?;
+            let ret_opcode = Felt252::from_hex("0x208b7fff7fff7ffe").unwrap();
+            let builtin_costs =
+                get_maybe_relocatable_from_var_name(vars::ids::BUILTIN_COSTS, vm, ids_data, ap_tracking)?;
+            vm.load_data((bytecode_base_addr + bytecode.len())?, &[ret_opcode.into(), builtin_costs])?;
+
+            for (rel_pc, hints) in class.hints {
+                let hint_ptr = Relocatable::from((bytecode_base_addr.segment_index, rel_pc));
+                hint_extension.insert(hint_ptr, hints.iter().map(|h| any_box!(h.clone())).collect());
+            }
         }
 
         // segments.load_data(
@@ -264,32 +277,8 @@ pub fn guess_class_facts(
         //     compiled_class: CompiledClass*,
         // }
         //
-        let next_ptr = vm.load_data(next_class_facts_ptr, &[class_hash.into(), cairo_contract_start_base.into()])?;
-        next_class_facts_ptr = next_ptr;
 
-        // bytecode_ptr = ids.compiled_class_facts[i].compiled_class.bytecode_ptr
-        //
-        // # Compiled classes are expected to end with a `ret` opcode followed by a pointer to
-        // # the builtin costs.
-        // segments.load_data(
-        //     ptr=bytecode_ptr + cairo_contract.bytecode_length,
-        //     data=[0x208b7fff7fff7ffe, ids.builtin_costs]
-        // )
-
-        let builtin_costs = get_maybe_relocatable_from_var_name(vars::ids::BUILTIN_COSTS, vm, ids_data, ap_tracking)?;
-        let ret_opcode = Felt252::from_hex("0x208b7fff7fff7ffe").unwrap();
-        vm.load_data(cairo_contract_end, &[ret_opcode.into(), builtin_costs])?;
-
-        // # Load hints and debug info.
-        // vm_load_program(
-        //     compiled_class.get_runnable_program(entrypoint_builtins=[]), bytecode_ptr)"#
-
-        let bytecode_ptr = (cairo_contract_start_base + CompiledClass::bytecode_ptr_offset())?;
-
-        for (rel_pc, hints) in class.hints.into_iter() {
-            let abs_pc = Relocatable::from((bytecode_ptr.segment_index, rel_pc));
-            hint_extension.insert(abs_pc, hints.iter().map(|h| any_box!(h.clone())).collect());
-        }
+        vm.load_data((compiled_class_facts_ptr + (2 * i))?, &[hash.into(), contract_base_addr.into()])?;
     }
 
     Ok(hint_extension)

@@ -75,6 +75,9 @@ pub mod ids {
     pub const ELM_SIZE: &str = "elm_size";
     pub const ENTRY_POINT_RETURN_VALUES: &str = "entry_point_return_values";
     pub const EXECUTION_CONTEXT: &str = "execution_context";
+    pub const COMPILED_CLASS_ENTRY_POINT: &str = "compiled_class_entry_point";
+    pub const CONTRACT_ENTRY_POINT: &str = "contract_entry_point";
+    pub const ENTRY_POINT_OFFSET: &str = "entry_point_offset";
     pub const EXISTS: &str = "exists";
     pub const EVALS: &str = "evals";
     pub const FINAL_CONTRACT_STATE_ROOT: &str = "final_contract_state_root";

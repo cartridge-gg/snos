@@ -24,7 +24,7 @@ use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 
 use crate::cairo_types::new_syscalls;
-use crate::cairo_types::structs::{EntryPointReturnValues, ExecutionContext};
+use crate::cairo_types::structs::{CompiledClass, EntryPointReturnValues, ExecutionContext};
 use crate::cairo_types::syscalls::{CallContractResponse, StorageRead, StorageReadRequest, StorageWrite, TxInfo};
 use crate::execution::constants::ENTRY_POINT_INITIAL_BUDGET;
 use crate::execution::deprecated_syscall_handler::DeprecatedOsSyscallHandlerWrapper;
@@ -121,13 +121,13 @@ pub fn load_next_tx_new(
     // Safe to unwrap because the remaining number of txs is checked in the cairo code.
     let tx = transactions.next().unwrap();
     if let Some(address) = tx.sender_address {
-        log::debug!("executing {} on: {}", tx.r#type, address);
+        log::debug!("executing {} hash {} on: {}", tx.r#type, tx.hash_value, address);
     }
     exec_scopes.insert_value(vars::scopes::TRANSACTIONS, transactions);
     exec_scopes.insert_value(vars::scopes::TX, tx.clone());
     insert_value_from_var_name(
         vars::ids::TX_TYPE,
-        Felt252::from_bytes_be_slice(tx.r#type.as_bytes()),
+        dbg!(Felt252::from_bytes_be_slice(tx.r#type.as_bytes())),
         vm,
         ids_data,
         ap_tracking,
@@ -1048,13 +1048,32 @@ where
 pub const CHECK_REMAINING_GAS: &str =
     "memory[ap] = to_felt_or_relocatable(ids.remaining_gas < ids.ENTRY_POINT_INITIAL_BUDGET)";
 
-pub fn check_remaining_gas(
+pub fn check_remaining_gas<PCS>(
     vm: &mut VirtualMachine,
-    _: &mut ExecutionScopes,
+    exec_scopes: &mut ExecutionScopes,
     ids_data: &HashMap<String, HintReference>,
     ap_tracking: &ApTracking,
     _constants: &HashMap<String, Felt252>,
-) -> Result<(), HintError> {
+) -> Result<(), HintError>
+where
+    PCS: PerContractStorage + 'static,
+{
+    let execution_ctx_ptr = get_ptr_from_var_name(vars::ids::EXECUTION_CONTEXT, vm, ids_data, ap_tracking)?;
+    println!("entry point: {}", vm.get_integer(execution_ctx_ptr)?);
+    println!("class hash: {}", vm.get_integer((execution_ctx_ptr + 1usize)?)?);
+    let entry_point_offset = get_ptr_from_var_name(vars::ids::COMPILED_CLASS_ENTRY_POINT, vm, ids_data, ap_tracking)?;
+    println!("selector: {}", vm.get_integer(entry_point_offset)?);
+    println!("offset: {}", vm.get_integer((entry_point_offset + 1usize)?)?);
+
+    let compiled_class = get_ptr_from_var_name(vars::ids::COMPILED_CLASS, vm, ids_data, ap_tracking)?;
+    println!(
+        "compiled_class.bytecode_ptr: {:?}",
+        vm.get_maybe(&(compiled_class + CompiledClass::bytecode_ptr_offset())?)
+    );
+
+    let contract_entry_point = get_ptr_from_var_name(vars::ids::CONTRACT_ENTRY_POINT, vm, ids_data, ap_tracking)?;
+    println!("contract entry point: {:?}", vm.get_maybe(&contract_entry_point));
+
     let remaining_gas = get_integer_from_var_name(vars::ids::REMAINING_GAS, vm, ids_data, ap_tracking)?;
     let entry_point_initial_budget = Felt252::from(ENTRY_POINT_INITIAL_BUDGET);
     insert_value_into_ap(vm, Felt252::from(remaining_gas < entry_point_initial_budget))
