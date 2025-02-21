@@ -97,6 +97,10 @@ fn hints<PCS>() -> HashMap<String, HintImpl> where
     hints.insert(builtins::SELECT_BUILTIN.into(), builtins::select_builtin);
     hints.insert(builtins::UPDATE_BUILTIN_PTRS.into(), builtins::update_builtin_ptrs);
     hints.insert(compiled_class::ASSIGN_BYTECODE_SEGMENTS.into(), compiled_class::assign_bytecode_segments);
+    hints.insert(compiled_class::VALIDATE_COMPILED_CLASS_FACTS.into(), compiled_class::validate_compiled_class_facts);
+    hints.insert(compiled_class::START_CALCULATE_COMPILED_CLASS_HASH.into(), compiled_class::start_calculate_compiled_class_hash);
+    hints.insert(compiled_class::END_CALCULATE_COMPILED_CLASS_HASH.into(), compiled_class::end_calculate_compiled_class_hash);
+    hints.insert(compiled_class::DELETE_MEMORY.into(), compiled_class::delete_memory);
     hints.insert(compiled_class::ASSERT_END_OF_BYTECODE_SEGMENTS.into(), compiled_class::assert_end_of_bytecode_segments);
     hints.insert(compiled_class::ITER_CURRENT_SEGMENT_INFO.into(), compiled_class::iter_current_segment_info);
     hints.insert(deprecated_compiled_class::LOAD_DEPRECATED_CLASS_FACTS.into(), deprecated_compiled_class::load_deprecated_class_facts);
@@ -176,6 +180,9 @@ fn hints<PCS>() -> HashMap<String, HintImpl> where
     hints.insert(execution::WRITE_SYSCALL_RESULT_DEPRECATED.into(), execution::write_syscall_result_deprecated::<PCS>);
     hints.insert(find_element::SEARCH_SORTED_OPTIMISTIC.into(), find_element::search_sorted_optimistic);
     hints.insert(os::CONFIGURE_KZG_MANAGER.into(), os::configure_kzg_manager);
+    hints.insert(os::OS_ENTER_SCOPE.into(), os::os_enter_scope::<PCS>);
+    hints.insert(os::USE_KZG_DA.into(), os::use_kzg_da);
+    hints.insert(os::FULL_OUTPUT.into(), os::full_output);
     hints.insert(os::WRITE_FULL_OUTPUT_TO_MEM.into(), os::write_full_output_to_mem);
     hints.insert(os::SET_AP_TO_NEW_BLOCK_HASH.into(), os::set_ap_to_new_block_hash);
     hints.insert(os::SET_AP_TO_PREV_BLOCK_HASH.into(), os::set_ap_to_prev_block_hash);
@@ -197,6 +204,7 @@ fn hints<PCS>() -> HashMap<String, HintImpl> where
     hints.insert(state::DECODE_NODE.into(), state::decode_node_hint);
     hints.insert(state::DECODE_NODE_2.into(), state::decode_node_hint);
     hints.insert(state::ENTER_SCOPE_COMMITMENT_INFO_BY_ADDRESS.into(), state::enter_scope_commitment_info_by_address::<PCS>);
+    hints.insert(state::FINALIZED_STATE.into(), state::finalized_state::<PCS>);
     hints.insert(state::LOAD_BOTTOM.into(), state::load_bottom);
     hints.insert(state::LOAD_EDGE.into(), state::load_edge);
     hints.insert(state::SET_PREIMAGE_FOR_CLASS_COMMITMENTS.into(), state::set_preimage_for_class_commitments);
@@ -281,8 +289,8 @@ type ExtensiveHintImpl = fn(
 ) -> Result<HintExtension, HintError>;
 
 static EXTENSIVE_HINTS: [(&str, ExtensiveHintImpl); 3] = [
-    (block_context::GUESS_CLASS_FACTS, block_context::guess_class_facts),
     (block_context::LOAD_CLASS, block_context::load_class),
+    (compiled_class::GUESS_CLASS_FACTS, compiled_class::guess_class_facts),
     (deprecated_compiled_class::LOAD_DEPRECATED_CLASS, deprecated_compiled_class::load_deprecated_class),
 ];
 

@@ -1,17 +1,20 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use blockifier::context::BlockContext;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::insert_value_into_ap;
 use cairo_vm::hint_processor::hint_processor_definition::HintReference;
 use cairo_vm::serde::deserialize_program::ApTracking;
 use cairo_vm::types::exec_scope::ExecutionScopes;
 use cairo_vm::vm::errors::hint_errors::HintError;
 use cairo_vm::vm::vm_core::VirtualMachine;
-use cairo_vm::Felt252;
+use cairo_vm::{any_box, Felt252};
 use indoc::indoc;
 
+use crate::execution::helper::ExecutionHelperWrapper;
 use crate::hints::vars;
 use crate::io::input::StarknetOsInput;
+use crate::starknet::starknet_storage::PerContractStorage;
 use crate::utils::{execute_coroutine, set_variable_in_root_exec_scope};
 
 pub const WRITE_FULL_OUTPUT_TO_MEM: &str = indoc! {r#"memory[fp + 19] = to_felt_or_relocatable(os_input.full_output)"#};
@@ -27,6 +30,70 @@ pub fn write_full_output_to_mem(
     let full_output = os_input.full_output;
 
     vm.insert_value((vm.get_fp() + 19)?, Felt252::from(full_output)).map_err(HintError::Memory)
+}
+
+pub const OS_ENTER_SCOPE: &str = indoc! {r#"
+    from starkware.starknet.definitions.constants import ALIAS_CONTRACT_ADDRESS
+
+    # This hint shouldn't be whitelisted.
+    vm_enter_scope(dict(
+        aliases=execution_helper.storage_by_address[ALIAS_CONTRACT_ADDRESS],
+        execution_helper=execution_helper,
+        __dict_manager=__dict_manager,
+        os_input=os_input,
+    ))"#
+};
+
+pub fn os_enter_scope<PCS>(
+    _: &mut VirtualMachine,
+    exec_scopes: &mut ExecutionScopes,
+    _: &HashMap<String, HintReference>,
+    _: &ApTracking,
+    _: &HashMap<String, Felt252>,
+) -> Result<(), HintError>
+where
+    PCS: PerContractStorage + 'static,
+{
+    let execution_helper: ExecutionHelperWrapper<PCS> = exec_scopes.get(vars::scopes::EXECUTION_HELPER)?;
+    let os_input: Rc<StarknetOsInput> = exec_scopes.get(vars::scopes::OS_INPUT)?;
+
+    exec_scopes.enter_scope(HashMap::from([
+        (vars::scopes::EXECUTION_HELPER.to_string(), any_box!(execution_helper)),
+        (vars::scopes::OS_INPUT.to_string(), any_box!(os_input)),
+    ]));
+
+    Ok(())
+}
+
+pub const USE_KZG_DA: &str = indoc! {r#"memory[fp + 24] = to_felt_or_relocatable(syscall_handler.block_info.use_kzg_da and (
+        not os_input.full_output
+    ))"#
+};
+
+pub fn use_kzg_da(
+    vm: &mut VirtualMachine,
+    exec_scopes: &mut ExecutionScopes,
+    _: &HashMap<String, HintReference>,
+    _: &ApTracking,
+    _: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
+    let block_context = exec_scopes.get_ref::<BlockContext>(vars::scopes::BLOCK_CONTEXT)?;
+    vm.insert_value((vm.get_fp() + 24)?, Felt252::from(block_context.block_info().use_kzg_da))?;
+    Ok(())
+}
+
+pub const FULL_OUTPUT: &str = "memory[fp + 25] = to_felt_or_relocatable(os_input.full_output)";
+
+pub fn full_output(
+    vm: &mut VirtualMachine,
+    exec_scopes: &mut ExecutionScopes,
+    _: &HashMap<String, HintReference>,
+    _: &ApTracking,
+    _: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
+    let os_input = exec_scopes.get_ref::<Rc<StarknetOsInput>>(vars::scopes::OS_INPUT)?;
+    vm.insert_value((vm.get_fp() + 25)?, Felt252::from(os_input.full_output))?;
+    Ok(())
 }
 
 pub const CONFIGURE_KZG_MANAGER: &str = indoc! {r#"__serialize_data_availability_create_pages__ = True

@@ -35,6 +35,24 @@ fn assert_tree_height_eq_merkle_height(tree_height: Felt252, merkle_height: Felt
     Ok(())
 }
 
+pub const FINALIZED_STATE: &str = "commitment_info_by_address=execution_helper.compute_storage_commitments()";
+
+pub fn finalized_state<PCS>(
+    _: &mut VirtualMachine,
+    exec_scopes: &mut ExecutionScopes,
+    _: &HashMap<String, HintReference>,
+    _: &ApTracking,
+    _: &HashMap<String, Felt252>,
+) -> Result<(), HintError>
+where
+    PCS: PerContractStorage + 'static,
+{
+    let execution_helper: ExecutionHelperWrapper<PCS> = exec_scopes.get(vars::scopes::EXECUTION_HELPER)?;
+    let commitment_info_by_address = execute_coroutine(execution_helper.compute_storage_commitments())??;
+    exec_scopes.insert_value(vars::scopes::COMMITMENT_INFO_BY_ADDRESS, commitment_info_by_address);
+    Ok(())
+}
+
 pub const SET_PREIMAGE_FOR_STATE_COMMITMENTS: &str = indoc! {r#"
 	ids.initial_root = os_input.contract_state_commitment_info.previous_root
 	ids.final_root = os_input.contract_state_commitment_info.updated_root

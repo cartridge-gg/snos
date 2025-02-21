@@ -103,8 +103,8 @@ pub fn load_casm_entrypoints(
 ) -> Result<(), HintError> {
     let mut b: Vec<MaybeRelocatable> = Vec::new();
     for ep in entry_points.iter() {
-        b.push(MaybeRelocatable::from(dbg!(Felt252::from(&ep.selector))));
-        b.push(MaybeRelocatable::from(dbg!(ep.offset)));
+        b.push(MaybeRelocatable::from(Felt252::from(&ep.selector)));
+        b.push(MaybeRelocatable::from(ep.offset));
         b.push(MaybeRelocatable::from(ep.builtins.len()));
         let builtins: Vec<MaybeRelocatable> =
             ep.builtins.iter().map(|bi| MaybeRelocatable::from(Felt252::from_bytes_be_slice(bi.as_bytes()))).collect();

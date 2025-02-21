@@ -13,6 +13,7 @@ pub const MUL_MOD_GAS_COST: u64 = 604;
 pub const ECDSA_GAS_COST: u64 = 10561;
 pub const MEMORY_HOLE_GAS_COST: u64 = 10;
 
+// This contract stores the block number -> block hash mapping.
 pub const BLOCK_HASH_CONTRACT_ADDRESS: u64 = 1;
 
 // An estimation of the initial gas for a transaction to run with. This solution is temporary and

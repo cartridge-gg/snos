@@ -1,6 +1,7 @@
 pub mod scopes {
     pub const BLOCK_CONTEXT: &str = "block_context";
     pub const BYTECODE_SEGMENT_STRUCTURE: &str = "bytecode_segment_structure";
+    pub const BYTECODE_SEGMENT_STRUCTURES: &str = "bytecode_segment_structures";
     pub const BYTECODE_SEGMENTS: &str = "bytecode_segments";
     pub const CASE: &str = "case";
     pub const COMMITMENT_INFO: &str = "commitment_info";
@@ -182,6 +183,8 @@ pub mod ids {
     pub const REMAINING_GAS: &str = "remaining_gas";
     pub const MAX_GAS: &str = "max_gas";
     pub const IS_SIERRA_GAS_MODE: &str = "is_sierra_gas_mode";
+    pub const HASH: &str = "hash";
+    pub const DATA_PTR: &str = "data_ptr";
 }
 
 pub mod constants {
