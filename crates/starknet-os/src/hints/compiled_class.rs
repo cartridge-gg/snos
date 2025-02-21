@@ -134,7 +134,6 @@ pub fn guess_class_facts(
 
             // Create new segment for bytecode and store pointer at [8]
             let bytecode_base_addr = vm.add_memory_segment();
-            dbg!(&bytecode_base_addr);
             vm.load_data(bytecode_base_addr, &bytecode)?;
             vm.insert_value((contract_base_addr + 7)?, Felt252::from(bytecode.len()))?;
             vm.insert_value((contract_base_addr + 8)?, bytecode_base_addr)?;
@@ -167,8 +166,8 @@ pub fn guess_class_facts(
         //
 
         vm.load_data(
-            dbg!((compiled_class_facts_ptr + (CompiledClassFact::cairo_size() * i))?),
-            &[dbg!(hash.into()), contract_base_addr.into()],
+            (compiled_class_facts_ptr + (CompiledClassFact::cairo_size() * i))?,
+            &[hash.into(), contract_base_addr.into()],
         )?;
     }
 

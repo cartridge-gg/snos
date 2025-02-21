@@ -22,6 +22,7 @@ use cairo_vm::{any_box, Felt252};
 use indoc::indoc;
 use num_bigint::BigUint;
 use num_traits::ToPrimitive;
+use starknet_api::transaction::fields::ValidResourceBounds;
 
 use crate::cairo_types::new_syscalls;
 use crate::cairo_types::structs::{EntryPointReturnValues, ExecutionContext};
@@ -127,7 +128,7 @@ pub fn load_next_tx_new(
     exec_scopes.insert_value(vars::scopes::TX, tx.clone());
     insert_value_from_var_name(
         vars::ids::TX_TYPE,
-        dbg!(Felt252::from_bytes_be_slice(tx.r#type.as_bytes())),
+        Felt252::from_bytes_be_slice(tx.r#type.as_bytes()),
         vm,
         ids_data,
         ap_tracking,
@@ -147,10 +148,13 @@ pub fn load_next_tx_new(
         (MaybeRelocatable::Int(Felt252::ZERO), MaybeRelocatable::Int(Felt252::ZERO))
     } else {
         let resource_bounds = tx.resource_bounds.ok_or(custom_hint_error("tx.resource_bounds is None"))?;
+        let n_resource_bounds = match resource_bounds {
+            ValidResourceBounds::L1Gas(..) => MaybeRelocatable::Int(Felt252::TWO),
+            ValidResourceBounds::AllResources(..) => MaybeRelocatable::Int(Felt252::THREE),
+        };
+
         let resource_bounds =
             create_resource_bounds_list(&resource_bounds).into_iter().map(MaybeRelocatable::Int).collect::<Vec<_>>();
-
-        let n_resource_bounds = MaybeRelocatable::Int(Felt252::from(resource_bounds.len()));
         let resource_bounds_ptr = vm.gen_arg(&resource_bounds)?;
 
         (resource_bounds_ptr, n_resource_bounds)

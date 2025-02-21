@@ -45,22 +45,10 @@ pub enum ToBlockifierError {
 pub fn resource_bounds_core_to_api(
     resource_bounds: &ResourceBoundsMapping,
 ) -> starknet_api::transaction::fields::ValidResourceBounds {
-    starknet_api::transaction::fields::ValidResourceBounds::AllResources(
-        starknet_api::transaction::fields::AllResourceBounds {
-            l1_gas: starknet_api::transaction::fields::ResourceBounds {
-                max_amount: starknet_api::execution_resources::GasAmount(resource_bounds.l1_gas.max_amount),
-                max_price_per_unit: starknet_api::block::GasPrice(resource_bounds.l1_gas.max_price_per_unit),
-            },
-            l2_gas: starknet_api::transaction::fields::ResourceBounds {
-                max_amount: starknet_api::execution_resources::GasAmount(resource_bounds.l2_gas.max_amount),
-                max_price_per_unit: starknet_api::block::GasPrice(resource_bounds.l2_gas.max_price_per_unit),
-            },
-            l1_data_gas: starknet_api::transaction::fields::ResourceBounds {
-                max_amount: starknet_api::execution_resources::GasAmount(0),
-                max_price_per_unit: starknet_api::block::GasPrice(0),
-            },
-        },
-    )
+    starknet_api::transaction::fields::ValidResourceBounds::L1Gas(starknet_api::transaction::fields::ResourceBounds {
+        max_amount: starknet_api::execution_resources::GasAmount(resource_bounds.l1_gas.max_amount),
+        max_price_per_unit: starknet_api::block::GasPrice(resource_bounds.l1_gas.max_price_per_unit),
+    })
 }
 
 fn da_mode_core_to_api(
