@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
 use blockifier::context::BlockContext;
-use blockifier::test_utils::deploy_account::deploy_account_tx;
+// use blockifier::test_utils::deploy_account::deploy_account_tx;
 use blockifier::test_utils::{create_calldata, BALANCE};
 use blockifier::transaction::test_utils::{self, max_fee};
 use cairo_vm::Felt252;
 use rstest::{fixture, rstest};
 use starknet_api::core::{calculate_contract_address, ClassHash, ContractAddress};
+use starknet_api::test_utils::deploy_account::executable_deploy_account_tx;
 use starknet_api::test_utils::NonceManager;
 use starknet_api::transaction::fields::{Calldata, ContractAddressSalt, Fee};
 use starknet_api::transaction::TransactionVersion;
@@ -90,7 +91,7 @@ async fn deploy_cairo0_account(
     // the right one.
     assert_eq!(deploy_args.class_hash, deployed_account_class_hash);
 
-    let deploy_account_tx = deploy_account_tx(
+    let deploy_account_tx = executable_deploy_account_tx(
         deploy_account_tx_args! {
             class_hash: deployed_account_class_hash,
             max_fee,
@@ -191,7 +192,7 @@ async fn deploy_cairo1_account(
     // the right one.
     assert_eq!(deploy_args.class_hash, deployed_account_class_hash);
 
-    let deploy_account_tx = deploy_account_tx(
+    let deploy_account_tx = executable_deploy_account_tx(
         deploy_account_tx_args! {
             class_hash: deployed_account_class_hash,
             max_fee,
@@ -251,7 +252,7 @@ async fn deploy_via_invoke_cairo0_account(
     ]
     .concat();
 
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_deploy", test_deploy_args),
@@ -303,7 +304,7 @@ async fn deploy_via_invoke_cairo1_account(
     ]
     .concat();
 
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_deploy", test_deploy_args),
@@ -347,7 +348,7 @@ async fn deploy_via_invoke_no_calldata_cairo1_account(
     let test_deploy_args =
         &[vec![empty_contract.declaration.class_hash.0, contract_address_salt.0], vec![Felt252::ZERO]].concat();
 
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(test_contract.address, "test_deploy_no_calldata", test_deploy_args),
@@ -402,7 +403,7 @@ async fn deploy_cairo0_check_get_info_call(block_context: BlockContext, max_fee:
     // the right one.
     assert_eq!(class_hash, deployed_account_class_hash);
 
-    let deploy_account_tx = deploy_account_tx(
+    let deploy_account_tx = executable_deploy_account_tx(
         deploy_account_tx_args! {
             class_hash: deployed_account_class_hash,
             max_fee,

@@ -90,7 +90,6 @@ fn hints<PCS>() -> HashMap<String, HintImpl> where
     hints.insert(block_context::FEE_TOKEN_ADDRESS.into(), block_context::fee_token_address);
     hints.insert(block_context::GET_BLOCK_MAPPING.into(), block_context::get_block_mapping);
     hints.insert(block_context::IS_LEAF.into(), is_leaf);
-    hints.insert(block_context::LOAD_CLASS_FACTS.into(), block_context::load_class_facts);
     hints.insert(block_context::LOAD_CLASS_INNER.into(), block_context::load_class_inner);
     hints.insert(block_context::SEQUENCER_ADDRESS.into(), block_context::sequencer_address);
     hints.insert(bls_field::COMPUTE_IDS_LOW.into(), bls_field::compute_ids_low);
@@ -113,7 +112,7 @@ fn hints<PCS>() -> HashMap<String, HintImpl> where
     hints.insert(execution::ASSERT_TRANSACTION_HASH.into(), execution::assert_transaction_hash);
     hints.insert(execution::CACHE_CONTRACT_STORAGE_REQUEST_KEY.into(), execution::cache_contract_storage_request_key::<PCS>);
     hints.insert(execution::CACHE_CONTRACT_STORAGE_SYSCALL_REQUEST_ADDRESS.into(), execution::cache_contract_storage_syscall_request_address::<PCS>);
-    hints.insert(execution::CHECK_REMAINING_GAS.into(), execution::check_remaining_gas::<PCS>);
+    hints.insert(execution::CHECK_REMAINING_GAS.into(), execution::check_remaining_gas);
     hints.insert(execution::VALIDATE_PREDICTED_GAS_COST.into(), execution::validate_predicted_gas_costs::<PCS>);
     hints.insert(execution::DEBUG_REMAINING_GAS.into(), execution::debug_remaining_gas);
     hints.insert(execution::CHECK_EXECUTION.into(), execution::check_execution::<PCS>);

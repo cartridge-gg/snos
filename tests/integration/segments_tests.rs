@@ -34,7 +34,7 @@ async fn test_segment_arena(
 
     let contract_address = test_contract.address;
 
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_segment_arena", &[]),

@@ -1,5 +1,4 @@
 use core::panic;
-use std::any::Any;
 use std::collections::hash_map::IntoIter;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -28,43 +27,6 @@ use crate::io::input::StarknetOsInput;
 use crate::starknet::core::os::contract_class::compiled_class_hash_objects::BytecodeSegmentStructureImpl;
 use crate::utils::{custom_hint_error, get_constant};
 
-pub const LOAD_CLASS_FACTS: &str = indoc! {r#"
-    ids.compiled_class_facts = segments.add()
-    ids.n_compiled_class_facts = len(os_input.compiled_classes)
-    vm_enter_scope({
-        'compiled_class_facts': iter(os_input.compiled_classes.items()),
-        'compiled_class_visited_pcs': os_input.compiled_class_visited_pcs,
-    })"#
-};
-pub fn load_class_facts(
-    vm: &mut VirtualMachine,
-    exec_scopes: &mut ExecutionScopes,
-    ids_data: &HashMap<String, HintReference>,
-    ap_tracking: &ApTracking,
-    _constants: &HashMap<String, Felt252>,
-) -> Result<(), HintError> {
-    let os_input: Rc<StarknetOsInput> = exec_scopes.get::<Rc<StarknetOsInput>>(vars::scopes::OS_INPUT)?.clone();
-    let compiled_class_facts_ptr = vm.add_memory_segment();
-    insert_value_from_var_name(vars::ids::COMPILED_CLASS_FACTS, compiled_class_facts_ptr, vm, ids_data, ap_tracking)?;
-
-    insert_value_from_var_name(
-        vars::ids::N_COMPILED_CLASS_FACTS,
-        os_input.compiled_classes.len(),
-        vm,
-        ids_data,
-        ap_tracking,
-    )?;
-
-    let compiled_class_facts: Box<dyn Any> = Box::new(os_input.compiled_classes.clone().into_iter());
-    let compiled_class_visited_pcs: Box<dyn Any> = Box::new(os_input.compiled_class_visited_pcs.clone());
-    exec_scopes.enter_scope(HashMap::from([
-        (String::from(vars::scopes::COMPILED_CLASS_FACTS), compiled_class_facts),
-        (String::from(vars::scopes::COMPILED_CLASS_VISITED_PCS), compiled_class_visited_pcs),
-    ]));
-    Ok(())
-}
-
-//
 pub const LOAD_CLASS_INNER: &str = indoc! {r#"
     from starkware.starknet.core.os.contract_class.compiled_class_hash import (
         create_bytecode_segment_structure,

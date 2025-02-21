@@ -73,7 +73,7 @@ pub fn build_block_context(
     // IMPORTANT:
     // The versioned constant must match the version that the block was executed with.
     // In this case, the versioned constant that Katana is using.
-    const SN_VERSION: StarknetVersion = StarknetVersion::V0_13_3; // v0.13.3
+    const SN_VERSION: StarknetVersion = StarknetVersion::V0_13_4;
     let versioned_constants = VersionedConstants::get(&SN_VERSION).unwrap();
     let bouncer_config = BouncerConfig::max();
 

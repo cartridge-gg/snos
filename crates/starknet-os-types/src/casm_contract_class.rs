@@ -1,7 +1,9 @@
 use std::cell::OnceCell;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use starknet_api::contract_class::SierraVersion;
 
 use crate::error::{ContractClassError, ConversionError};
 use crate::hash::GenericClassHash;
@@ -26,10 +28,9 @@ pub struct GenericCasmContractClass {
 fn blockifier_contract_class_from_cairo_lang_class(
     cairo_lang_class: CairoLangCasmClass,
 ) -> Result<BlockifierCasmClass, ContractClassError> {
-    let blockifier_class: BlockifierCasmClass = cairo_lang_class
-        .try_into()
-        .map_err(|e| ContractClassError::ConversionError(ConversionError::BlockifierError(Box::new(e))))?;
-    Ok(blockifier_class)
+    let version = SierraVersion::from_str(&cairo_lang_class.compiler_version).unwrap();
+    BlockifierCasmClass::try_from((cairo_lang_class, version))
+        .map_err(|e| ContractClassError::ConversionError(ConversionError::BlockifierError(Box::new(e))))
 }
 
 fn cairo_lang_contract_class_from_bytes(bytes: &[u8]) -> Result<CairoLangCasmClass, ContractClassError> {

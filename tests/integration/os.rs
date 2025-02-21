@@ -32,7 +32,7 @@ async fn return_result_cairo0_account(
     let tx_version = TransactionVersion::ZERO;
     let mut nonce_manager = NonceManager::default();
 
-    let return_result_tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let return_result_tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address,
         calldata: create_calldata(
@@ -74,7 +74,7 @@ async fn return_result_cairo1_account(
     let sender_address = initial_state.deployed_cairo1_contracts.get("account_with_dummy_validate").unwrap().address;
     let contract_address = initial_state.deployed_cairo0_contracts.get("test_contract").unwrap().address;
 
-    let return_result_tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let return_result_tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address,
         calldata: create_calldata(
@@ -128,7 +128,7 @@ async fn syscalls_cairo1(
     ]
     .concat();
 
-    let test_emit_event_tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let test_emit_event_tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_emit_event", entrypoint_args),
@@ -137,7 +137,7 @@ async fn syscalls_cairo1(
     });
 
     // test_storage_read_write
-    let test_storage_read_write_tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let test_storage_read_write_tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_storage_read_write", &[Felt252::TWO, Felt252::ONE]),
@@ -146,7 +146,7 @@ async fn syscalls_cairo1(
     });
 
     // test_get_block_hash
-    let test_get_block_hash_tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let test_get_block_hash_tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_get_block_hash", &[felt!(block_context.block_info().block_number.0 - STORED_BLOCK_HASH_BUFFER)]),
@@ -159,7 +159,7 @@ async fn syscalls_cairo1(
     let payload = vec![felt!(2019_u16), felt!(2020_u16), felt!(2021_u16)];
     let entrypoint_args = &[vec![to_address, felt!(payload.len() as u64)], payload].concat();
 
-    let test_send_message_to_l1_tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let test_send_message_to_l1_tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_send_message_to_l1", entrypoint_args),
@@ -179,7 +179,7 @@ async fn syscalls_cairo1(
         felt!(0_u8),              // deploy_from_zero
     ];
 
-    let test_deploy_tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let test_deploy_tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_deploy", entrypoint_args),

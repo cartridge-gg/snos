@@ -46,7 +46,7 @@ async fn test_syscall_library_call_cairo1(
 
     log::debug!("Entrypoint args: {entrypoint_args:?}");
 
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_library_call", entrypoint_args),
@@ -90,7 +90,7 @@ async fn test_syscall_replace_class_cairo1(
     let class_hash = test_contract.declaration.class_hash;
 
     let mut nonce_manager = NonceManager::default();
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_replace_class", &[class_hash.0]),
@@ -130,7 +130,7 @@ async fn test_syscall_keccak_cairo1(
     let tx_version = TransactionVersion::ZERO;
 
     let mut nonce_manager = NonceManager::default();
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_keccak", &[]),
@@ -173,7 +173,7 @@ async fn test_syscall_test_secp_cairo1(
 
     let contract_address = test_contract.address;
 
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, curve_type, &[]),

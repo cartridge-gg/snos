@@ -215,7 +215,7 @@ impl From<TryFromIntError> for SyscallExecutionError {
 impl From<BlockifierSyscallError> for SyscallExecutionError {
     fn from(error: BlockifierSyscallError) -> Self {
         match error {
-            BlockifierSyscallError::SyscallError { error_data } => {
+            BlockifierSyscallError::Revert { error_data } => {
                 Self::SyscallError { error_data: error_data.into_iter().map(|e| e.to_biguint().into()).collect() }
             }
             _ => Self::BlockifierSyscallError(error),

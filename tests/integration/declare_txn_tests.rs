@@ -10,6 +10,7 @@ use starknet_api::contract_class::{ClassInfo, SierraVersion};
 use starknet_api::core::CompiledClassHash;
 use starknet_api::declare_tx_args;
 use starknet_api::execution_resources::GasAmount;
+use starknet_api::test_utils::declare::executable_declare_tx;
 use starknet_api::test_utils::NonceManager;
 use starknet_api::transaction::fields::{AllResourceBounds, Fee, ResourceBounds, ValidResourceBounds};
 use starknet_api::transaction::TransactionVersion;
@@ -72,9 +73,10 @@ async fn declare_v3_cairo1_account(
         HashMap::from([(class_hash, ContractClassComponentHashes::from(flattened_sierra_class))]);
 
     let sierra_version = SierraVersion::from_str(&contract_class.compiler_version).unwrap();
-    let class_info = ClassInfo::new(&contract_class.into(), sierra_program_len, 0, sierra_version).unwrap();
+    let class = (contract_class, sierra_version.clone());
+    let class_info = ClassInfo::new(&class.into(), sierra_program_len, 0, sierra_version).unwrap();
 
-    let declare_tx = blockifier::test_utils::declare::declare_tx(
+    let declare_tx = executable_declare_tx(
         declare_tx_args! {
             max_fee,
             sender_address,
@@ -146,9 +148,10 @@ async fn declare_cairo1_account(
         HashMap::from([(class_hash, ContractClassComponentHashes::from(flattened_sierra_class))]);
 
     let sierra_version = SierraVersion::from_str(&contract_class.compiler_version).unwrap();
-    let class_info = ClassInfo::new(&contract_class.into(), sierra_program_len, 0, sierra_version).unwrap();
+    let class = (contract_class, sierra_version.clone());
+    let class_info = ClassInfo::new(&class.into(), sierra_program_len, 0, sierra_version).unwrap();
 
-    let declare_tx = blockifier::test_utils::declare::declare_tx(
+    let declare_tx = executable_declare_tx(
         declare_tx_args! {
             max_fee,
             sender_address,
@@ -215,7 +218,7 @@ async fn declare_v1_cairo0_account(
     let blockifier_class = test_contract.to_starknet_api_contract_class().unwrap();
     let class_info = calculate_class_info_for_testing(blockifier_class.into());
 
-    let declare_tx = blockifier::test_utils::declare::declare_tx(
+    let declare_tx = executable_declare_tx(
         declare_tx_args! {
             max_fee,
             sender_address,
@@ -283,9 +286,10 @@ async fn declare_cairo0_with_tx_info(
         HashMap::from([(class_hash, ContractClassComponentHashes::from(flattened_sierra_class))]);
 
     let sierra_version = SierraVersion::from_str(&contract_class.compiler_version).unwrap();
-    let class_info = ClassInfo::new(&contract_class.into(), sierra_program_len, 0, sierra_version).unwrap();
+    let class = (contract_class, sierra_version.clone());
+    let class_info = ClassInfo::new(&class.into(), sierra_program_len, 0, sierra_version).unwrap();
 
-    let declare_tx = blockifier::test_utils::declare::declare_tx(
+    let declare_tx = executable_declare_tx(
         declare_tx_args! {
             max_fee,
             sender_address,

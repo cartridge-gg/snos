@@ -425,7 +425,7 @@ dependencies = [
 [[package]]
 name = "blockifier"
 version = "0.0.0"
-source = "git+https://github.com/dojoengine/sequencer?rev=391eee25#391eee25ddb225e1b601c6e93af93e14176d8530"
+source = "git+https://github.com/dojoengine/sequencer?rev=75aeda3e#75aeda3ed88dc0ba23a0cbd176f43031940bb54b"
 dependencies = [
  "anyhow",
  "ark-ec",
@@ -439,6 +439,7 @@ dependencies = [
  "cairo-vm 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more",
  "indexmap 2.6.0",
+ "infra_utils",
  "itertools 0.12.1",
  "keccak",
  "log",
@@ -457,6 +458,7 @@ dependencies = [
  "sha2",
  "starknet-types-core",
  "starknet_api",
+ "starknet_sierra_compile",
  "strum",
  "strum_macros",
  "tempfile",
@@ -1061,9 +1063,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-syntax-codegen"
-version = "2.9.2"
+version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd7990586c9bb37eaa875ffeb218bdecf96f87881d03263ebf84fcd46514ca9f"
+checksum = "eb06c150a805dabba06f7a20bf8c5becd81b862eaf4a3ab1a38acead1dc5b101"
 dependencies = [
  "genco",
  "xshell",
@@ -2453,7 +2455,7 @@ checksum = "b248f5224d1d606005e02c97f5aa4e88eeb230488bcc03bc9ca4d7991399f2b5"
 [[package]]
 name = "infra_utils"
 version = "0.0.0"
-source = "git+https://github.com/dojoengine/sequencer?rev=391eee25#391eee25ddb225e1b601c6e93af93e14176d8530"
+source = "git+https://github.com/dojoengine/sequencer?rev=75aeda3e#75aeda3ed88dc0ba23a0cbd176f43031940bb54b"
 dependencies = [
  "tokio",
  "tracing",
@@ -3031,7 +3033,7 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 [[package]]
 name = "papyrus_config"
 version = "0.0.0"
-source = "git+https://github.com/dojoengine/sequencer?rev=391eee25#391eee25ddb225e1b601c6e93af93e14176d8530"
+source = "git+https://github.com/dojoengine/sequencer?rev=75aeda3e#75aeda3ed88dc0ba23a0cbd176f43031940bb54b"
 dependencies = [
  "clap",
  "infra_utils",
@@ -3040,6 +3042,7 @@ dependencies = [
  "serde_json",
  "strum_macros",
  "thiserror",
+ "tracing",
  "validator",
 ]
 
@@ -3688,6 +3691,15 @@ dependencies = [
  "spin",
  "untrusted",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "rlimit"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7043b63bd0cd1aaa628e476b80e6d4023a3b50eb32789f2728908107bd0c793a"
+dependencies = [
+ "libc",
 ]
 
 [[package]]
@@ -4663,7 +4675,7 @@ dependencies = [
 [[package]]
 name = "starknet_api"
 version = "0.0.0"
-source = "git+https://github.com/dojoengine/sequencer?rev=391eee25#391eee25ddb225e1b601c6e93af93e14176d8530"
+source = "git+https://github.com/dojoengine/sequencer?rev=75aeda3e#75aeda3ed88dc0ba23a0cbd176f43031940bb54b"
 dependencies = [
  "bitvec",
  "cairo-lang-runner",
@@ -4671,8 +4683,10 @@ dependencies = [
  "derive_more",
  "hex",
  "indexmap 2.6.0",
+ "infra_utils",
  "itertools 0.12.1",
  "num-bigint",
+ "num-traits 0.2.19",
  "pretty_assertions",
  "primitive-types",
  "semver",
@@ -4684,6 +4698,26 @@ dependencies = [
  "strum",
  "strum_macros",
  "thiserror",
+]
+
+[[package]]
+name = "starknet_sierra_compile"
+version = "0.0.0"
+source = "git+https://github.com/dojoengine/sequencer?rev=75aeda3e#75aeda3ed88dc0ba23a0cbd176f43031940bb54b"
+dependencies = [
+ "cairo-lang-sierra",
+ "cairo-lang-starknet-classes",
+ "cairo-lang-utils",
+ "infra_utils",
+ "papyrus_config",
+ "rlimit",
+ "serde",
+ "serde_json",
+ "starknet-types-core",
+ "starknet_api",
+ "tempfile",
+ "thiserror",
+ "validator",
 ]
 
 [[package]]

@@ -302,14 +302,6 @@ pub async fn prove_block(
         HashMap::default()
     };
 
-    let visited_pcs: HashMap<Felt252, Vec<Felt252>> = blockifier_state
-        .visited_pcs
-        .iter()
-        .map(|(class_hash, visited_pcs)| {
-            (class_hash.0, visited_pcs.iter().copied().map(Felt252::from).collect::<Vec<_>>())
-        })
-        .collect();
-
     // we're assuming there's always at least one storage proof in the list
     let default_previous_storage_proof = (&Felt::ZERO, &PathfinderProof::default());
     let (.., prev_proofs) = previous_storage_proofs.iter().next().unwrap_or(default_previous_storage_proof);
@@ -360,7 +352,6 @@ pub async fn prove_block(
         contract_class_commitment_info,
         deprecated_compiled_classes,
         compiled_classes,
-        compiled_class_visited_pcs: visited_pcs,
         contracts: contract_states,
         contract_address_to_class_hash,
         class_hash_to_compiled_class_hash,

@@ -24,7 +24,7 @@ use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 
 use crate::cairo_types::new_syscalls;
-use crate::cairo_types::structs::{CompiledClass, EntryPointReturnValues, ExecutionContext};
+use crate::cairo_types::structs::{EntryPointReturnValues, ExecutionContext};
 use crate::cairo_types::syscalls::{CallContractResponse, StorageRead, StorageReadRequest, StorageWrite, TxInfo};
 use crate::execution::constants::ENTRY_POINT_INITIAL_BUDGET;
 use crate::execution::deprecated_syscall_handler::DeprecatedOsSyscallHandlerWrapper;
@@ -1091,32 +1091,13 @@ where
 pub const CHECK_REMAINING_GAS: &str =
     "memory[ap] = to_felt_or_relocatable(ids.remaining_gas < ids.ENTRY_POINT_INITIAL_BUDGET)";
 
-pub fn check_remaining_gas<PCS>(
+pub fn check_remaining_gas(
     vm: &mut VirtualMachine,
-    exec_scopes: &mut ExecutionScopes,
+    _: &mut ExecutionScopes,
     ids_data: &HashMap<String, HintReference>,
     ap_tracking: &ApTracking,
-    _constants: &HashMap<String, Felt252>,
-) -> Result<(), HintError>
-where
-    PCS: PerContractStorage + 'static,
-{
-    let execution_ctx_ptr = get_ptr_from_var_name(vars::ids::EXECUTION_CONTEXT, vm, ids_data, ap_tracking)?;
-    println!("entry point: {}", vm.get_integer(execution_ctx_ptr)?);
-    println!("class hash: {}", vm.get_integer((execution_ctx_ptr + 1usize)?)?);
-    let entry_point_offset = get_ptr_from_var_name(vars::ids::COMPILED_CLASS_ENTRY_POINT, vm, ids_data, ap_tracking)?;
-    println!("selector: {}", vm.get_integer(entry_point_offset)?);
-    println!("offset: {}", vm.get_integer((entry_point_offset + 1usize)?)?);
-
-    let compiled_class = get_ptr_from_var_name(vars::ids::COMPILED_CLASS, vm, ids_data, ap_tracking)?;
-    println!(
-        "compiled_class.bytecode_ptr: {:?}",
-        vm.get_maybe(&(compiled_class + CompiledClass::bytecode_ptr_offset())?)
-    );
-
-    let contract_entry_point = get_ptr_from_var_name(vars::ids::CONTRACT_ENTRY_POINT, vm, ids_data, ap_tracking)?;
-    println!("contract entry point: {:?}", vm.get_maybe(&contract_entry_point));
-
+    _: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
     let remaining_gas = get_integer_from_var_name(vars::ids::REMAINING_GAS, vm, ids_data, ap_tracking)?;
     let entry_point_initial_budget = Felt252::from(ENTRY_POINT_INITIAL_BUDGET);
     insert_value_into_ap(vm, Felt252::from(remaining_gas < entry_point_initial_budget))
@@ -1397,16 +1378,7 @@ pub fn initial_ge_required_gas(
     ap_tracking: &ApTracking,
     _constants: &HashMap<String, Felt252>,
 ) -> Result<(), HintError> {
-    // line below fails with: UnknownIdentifier("required_gas"):
-    // let required_gas = get_integer_from_var_name(REQUIRED_GAS, vm, ids_data, ap_tracking)?;
-
-    // the reason for this is: hint reference for `required_gas` is cast([fp + (-4)] + (-10000), felt)
-    // in our case [fp-4] contains a felt  to `get_integer_from_var_name` assumes that [fp-4] contains a
-    // pointer not a felt below is a temporary workaround, until the problem is solved in the vm
-
-    // workaround
-    let required_gas = *vm.get_integer((vm.get_fp() - 4)?)? - 10000;
-
+    let required_gas = get_integer_from_var_name(vars::ids::REQUIRED_GAS, vm, ids_data, ap_tracking)?;
     let initial_gas = get_integer_from_var_name(vars::ids::INITIAL_GAS, vm, ids_data, ap_tracking)?;
     insert_value_into_ap(vm, Felt252::from(initial_gas.as_ref() >= &required_gas))
 }

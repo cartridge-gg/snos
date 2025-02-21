@@ -139,7 +139,8 @@ async fn create_class_info(
             // let flattened_sierra = generic_sierra.clone().to_starknet_core_contract_class()?;
             let sierra = generic_sierra.compile()?.to_cairo_lang_contract_class()?;
             let sierra_version = SierraVersion::from_str(&sierra.compiler_version).unwrap();
-            ClassInfo::new(&starknet_api::contract_class::ContractClass::V1(sierra), 1, 0, sierra_version)?
+            let class = (sierra, sierra_version.clone());
+            ClassInfo::new(&class.into(), 1, 0, sierra_version)?
         }
 
         starknet::core::types::ContractClass::Legacy(legacy) => {

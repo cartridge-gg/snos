@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 use blockifier::context::BlockContext;
 use blockifier::test_utils::create_calldata;
-use blockifier::transaction::test_utils::{self, account_invoke_tx, max_fee};
+use blockifier::transaction::test_utils::{self, max_fee};
 use blockifier::transaction::transaction_execution::Transaction;
 use cairo_vm::Felt252;
 use num_traits::ToPrimitive;
@@ -56,7 +56,7 @@ async fn test_syscall_library_call_cairo0(
 
     log::debug!("Entrypoint args: {entrypoint_args:?}");
 
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_library_call", entrypoint_args),
@@ -98,7 +98,7 @@ async fn test_syscall_get_block_number_cairo0(
 
     let tx_version = TransactionVersion::ZERO;
     let mut nonce_manager = NonceManager::default();
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_get_block_number", &[felt!(block_number)]),
@@ -140,7 +140,7 @@ async fn test_syscall_get_block_timestamp_cairo0(
 
     let tx_version = TransactionVersion::ZERO;
     let mut nonce_manager = NonceManager::default();
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_get_block_timestamp", &[felt!(block_timestamp)]),
@@ -190,7 +190,7 @@ async fn test_syscall_get_tx_info_cairo0(
     // hash that must be set in the calldata.
     let tx_hash =
         TransactionHash(Felt252::from_str("0x8704f5e69650b81810a420373c21885aa6e75a8c46e34095e12a2a5231815f").unwrap());
-    let invoke_tx = account_invoke_tx(invoke_tx_args! {
+    let invoke_tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_get_tx_info_no_tx_hash_check", &[
@@ -259,7 +259,7 @@ async fn test_syscall_get_tx_signature_cairo0(
 
     let mut nonce_manager = NonceManager::default();
 
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_get_tx_signature", &[]),
@@ -304,7 +304,7 @@ async fn test_syscall_replace_class_cairo0(
     let class_hash = test_contract.declaration.class_hash;
 
     let mut nonce_manager = NonceManager::default();
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_replace_class", &[class_hash.0]),
@@ -365,7 +365,7 @@ async fn test_syscall_deploy_cairo0(
     .unwrap();
 
     let mut nonce_manager = NonceManager::default();
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_deploy", test_deploy_args),
@@ -421,7 +421,7 @@ async fn test_syscall_get_sequencer_address_cairo0(
     let expected_sequencer_address = block_context.block_info().sequencer_address;
 
     let mut nonce_manager = NonceManager::default();
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_get_sequencer_address", &[*expected_sequencer_address.0.key()]),
@@ -478,7 +478,7 @@ async fn test_syscall_get_contract_address_cairo0(
     let tx_version = TransactionVersion::ZERO;
 
     let mut nonce_manager = NonceManager::default();
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_contract_address", test_contract_address_args),
@@ -531,7 +531,7 @@ async fn test_syscall_emit_event_cairo0(
     .concat();
 
     let mut nonce_manager = NonceManager::default();
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "test_emit_event", entrypoint_args),
@@ -580,7 +580,7 @@ async fn test_syscall_send_message_to_l1_cairo0(
     let entrypoint_args = &[vec![to_address]].concat();
 
     let mut nonce_manager = NonceManager::default();
-    let tx = test_utils::account_invoke_tx(invoke_tx_args! {
+    let tx = test_utils::invoke_tx_with_default_flags(invoke_tx_args! {
         max_fee,
         sender_address: sender_address,
         calldata: create_calldata(contract_address, "send_message", entrypoint_args),
