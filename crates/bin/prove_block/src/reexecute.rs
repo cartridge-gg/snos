@@ -43,7 +43,7 @@ pub fn reexecute_transactions_with_blockifier<S: StateReader>(
     block_context: &BlockContext,
     buffer_block_hash: Felt252,
     txs: Vec<Transaction>,
-) -> Result<Vec<TransactionExecutionInfo>, Box<dyn Error>> {
+) -> Result<Vec<TransactionExecutionInfo>, Box<dyn Error + Send + Sync + 'static>> {
     let current_block_number = block_context.block_info().block_number;
     let os_constants = &block_context.versioned_constants().os_constants;
     let buffer_block_number_and_hash = if current_block_number.0 >= STORED_BLOCK_HASH_BUFFER {

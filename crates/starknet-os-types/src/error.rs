@@ -20,7 +20,7 @@ pub enum ContractClassError {
 #[derive(thiserror::Error, Debug)]
 pub enum ConversionError {
     #[error("Could not build Blockifier contract class: {0}")]
-    BlockifierError(Box<dyn Error + 'static>),
+    BlockifierError(Box<dyn Error + Send + Sync + 'static>),
 
     #[error("Missing Starknet serialized class")]
     StarknetClassMissing,

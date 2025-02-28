@@ -53,7 +53,7 @@ pub enum ProveBlockError {
     #[error("RPC Error: {0}")]
     RpcError(#[from] ProviderError),
     #[error("Re-Execution Error: {0}")]
-    ReExecutionError(#[from] Box<dyn std::error::Error>),
+    ReExecutionError(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error("Tree Error: {0}")]
     TreeError(#[from] TreeError),
     #[error("Contract Class Error: {0}")]
