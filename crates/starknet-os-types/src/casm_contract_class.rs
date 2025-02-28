@@ -1,7 +1,7 @@
-use std::cell::OnceCell;
 use std::str::FromStr;
 use std::sync::Arc;
 
+use once_cell::sync::OnceCell;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use starknet_api::contract_class::SierraVersion;
 
