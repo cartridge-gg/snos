@@ -39,7 +39,7 @@ cairo-lang-starknet-classes = { version = "2.10.0" }
 cairo-lang-utils = { version = "2.10.0" }
 cairo-lang-casm = { version = "2.10.0" }
 cairo-type-derive = { version = "0.1.0", path = "crates/cairo-type-derive" }
-cairo-vm = { git = "https://github.com/Moonsong-Labs/cairo-vm", branch = "notlesh/snos-2024-11-04", features = [
+cairo-vm = { git = "https://github.com/kariy/cairo-vm", branch = "kariy/1.0.2_clear-cell", features = [
 	"cairo-1-hints",
 	"extensive_hints",
 	"mod_builtin",
