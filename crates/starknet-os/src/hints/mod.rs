@@ -261,6 +261,8 @@ fn hints<PCS>() -> HashMap<String, HintImpl> where
     hints.insert(compression::GET_PREV_OFFSET.into(), compression::get_prev_offset);
     hints.insert(compression::COMPRESSION_HINT.into(), compression::compression_hint);
     hints.insert(compression::SET_DECOMPRESSED_DST.into(), compression::set_decompressed_dst);
+    hints.insert(INITIALIZE_CONTRACT_ADDRESS_TO_SHARD.into(), initialize_contract_address_to_shard);
+    hints.insert(INITIALIZE_SLOTS.into(), initialize_slots);
     hints
 }
 
@@ -456,12 +458,52 @@ pub fn starknet_os_input(
         get_ptr_from_var_name(vars::ids::INITIAL_CARRIED_OUTPUTS, vm, ids_data, ap_tracking)?;
 
     let messages_to_l1 = initial_carried_outputs_ptr;
-    let temp_segment = vm.add_temporary_segment();
+    let temp_segment = vm.add_memory_segment();
     vm.insert_value(messages_to_l1, temp_segment)?;
 
     let messages_to_l2 = (initial_carried_outputs_ptr + 1_i32)?;
-    let temp_segment = vm.add_temporary_segment();
+    let temp_segment = vm.add_memory_segment();
     vm.insert_value(messages_to_l2, temp_segment).map_err(|e| e.into())
+}
+
+pub const INITIALIZE_CONTRACT_ADDRESS_TO_SHARD: &str =
+    "ids.contract_address_to_shard = os_input.contract_address_to_shard";
+
+pub fn initialize_contract_address_to_shard(
+    vm: &mut VirtualMachine,
+    exec_scopes: &mut ExecutionScopes,
+    ids_data: &HashMap<String, HintReference>,
+    ap_tracking: &ApTracking,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
+    let os_input = exec_scopes.get::<Rc<StarknetOsInput>>(vars::scopes::OS_INPUT)?;
+    insert_value_from_var_name(
+        vars::ids::CONTRACT_ADDRESS_TO_SHARD,
+        os_input.shard_contract_address,
+        vm,
+        ids_data,
+        ap_tracking,
+    )?;
+    Ok(())
+}
+
+pub const INITIALIZE_SLOTS: &str = "ids.slots = os_input.slots;ids.slots_len = len(ids.slots)";
+
+pub fn initialize_slots(
+    vm: &mut VirtualMachine,
+    exec_scopes: &mut ExecutionScopes,
+    ids_data: &HashMap<String, HintReference>,
+    ap_tracking: &ApTracking,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
+    let os_input = exec_scopes.get::<Rc<StarknetOsInput>>(vars::scopes::OS_INPUT)?;
+    let slots = os_input.slots.clone();
+    let slots_ptr = get_ptr_from_var_name(vars::ids::SLOTS, vm, ids_data, ap_tracking)?;
+    for (i, slot) in slots.iter().enumerate() {
+        vm.insert_value((slots_ptr + i as i32)?, slot)?;
+    }
+    insert_value_from_var_name(vars::ids::SLOTS_LEN, Felt252::from(slots.len()), vm, ids_data, ap_tracking)?;
+    Ok(())
 }
 
 pub const INITIALIZE_STATE_CHANGES: &str = indoc! {r#"
