@@ -118,6 +118,8 @@ pub async fn prove_block(
     rpc_provider: &str,
     layout: LayoutName,
     full_output: bool,
+    shard_contract_address: Felt252,
+    slots: Vec<Felt252>,
 ) -> Result<(CairoPie, StarknetOsOutput), ProveBlockError> {
     log::info!("Preparing inputs for block {}", block_number);
 
@@ -372,8 +374,9 @@ pub async fn prove_block(
         new_block_hash: block_with_txs.block_hash,
         prev_block_hash: previous_block_hash,
         full_output,
+        shard_contract_address,
+        slots,
     });
-
     let execution_helper = ExecutionHelperWrapper::<ProverPerContractStorage>::new(
         contract_storages,
         tx_execution_infos,

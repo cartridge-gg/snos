@@ -1,4 +1,4 @@
-use cairo_vm::types::layout_name::LayoutName;
+use cairo_vm::{types::layout_name::LayoutName, Felt252};
 use clap::Parser;
 use prove_block::debug_prove_error;
 
@@ -13,6 +13,14 @@ struct Args {
     /// RPC endpoint to use for fact fetching
     #[arg(long = "rpc-provider", default_value = "http://localhost:9545")]
     rpc_provider: String,
+
+    /// Shard contract address
+    #[arg(long = "shard-contract-address")]
+    shard_contract_address: Felt252,
+
+    /// Slots
+    #[arg(long = "slots")]
+    slots: Vec<Felt252>,
 }
 
 fn init_logging() {
@@ -32,7 +40,7 @@ async fn main() {
     let block_number = args.block_number;
     let layout = LayoutName::all_cairo;
 
-    let result = prove_block::prove_block(DEFAULT_COMPILED_OS, block_number, &args.rpc_provider, layout, true).await;
+    let result = prove_block::prove_block(DEFAULT_COMPILED_OS, block_number, &args.rpc_provider, layout, true, args.shard_contract_address, args.slots).await;
     let (pie, _snos_output) = result.map_err(debug_prove_error).expect("Block proven");
     pie.run_validity_checks().expect("Valid PIE");
 }

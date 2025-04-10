@@ -10,17 +10,9 @@ use serde::{Deserialize, Serialize};
 use crate::error::SnOsError;
 use crate::hints::compression::decompress;
 
-const PREVIOUS_MERKLE_UPDATE_OFFSET: usize = 0;
-const NEW_MERKLE_UPDATE_OFFSET: usize = 1;
-const PREV_BLOCK_NUMBER_OFFSET: usize = 2;
-const NEW_BLOCK_NUMBER_OFFSET: usize = 3;
-const PREV_BLOCK_HASH_OFFSET: usize = 4;
-const NEW_BLOCK_HASH_OFFSET: usize = 5;
-const OS_PROGRAM_HASH_OFFSET: usize = 6;
-const CONFIG_HASH_OFFSET: usize = 7;
-const USE_KZG_DA_OFFSET: usize = 8;
-const FULL_OUTPUT_OFFSET: usize = 9;
-const HEADER_SIZE: usize = 10;
+const USE_KZG_DA_OFFSET: usize = 0;
+const FULL_OUTPUT_OFFSET: usize = 1;
+const HEADER_SIZE: usize = 2;
 const KZG_N_BLOBS_OFFSET: usize = 1;
 
 /// Represents the changes in a contract instance.
@@ -46,30 +38,9 @@ pub struct OsStateDiff {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct StarknetOsOutput {
-    /// The root before.
-    pub initial_root: Felt252,
-    /// The root after.
-    pub final_root: Felt252,
-    /// The previous block number.
-    pub prev_block_number: Felt252,
-    /// The current block number.
-    pub new_block_number: Felt252,
-    /// The previous block hash.
-    pub prev_block_hash: Felt252,
-    /// The current block hash.
-    pub new_block_hash: Felt252,
-    /// The hash of the OS program, if the aggregator was used. Zero if the OS was used directly.
-    pub os_program_hash: Felt252,
-    /// The hash of the OS config.
-    pub starknet_os_config_hash: Felt252,
-    /// Whether KZG data availability was used.
     pub use_kzg_da: Felt252,
     /// Indicates whether previous state values are included in the state update information.
     pub full_output: Felt252,
-    /// Messages from L2 to L1.
-    pub messages_to_l1: Vec<Felt252>,
-    /// Messages from L1 to L2.
-    pub messages_to_l2: Vec<Felt252>,
     /// The state diff.
     pub state_diff: Option<OsStateDiff>,
 }
@@ -250,7 +221,7 @@ fn deserialize_contract_class_da_changes<I: Iterator<Item = Felt252>>(
 }
 
 // Reverse of serialize_messages in os/output.cairo
-fn deserialize_messages<I>(output_iter: &mut I) -> Result<(Vec<Felt252>, Vec<Felt252>), SnOsError>
+fn _deserialize_messages<I>(output_iter: &mut I) -> Result<(Vec<Felt252>, Vec<Felt252>), SnOsError>
 where
     I: Iterator<Item = Felt252>,
 {
@@ -328,8 +299,6 @@ where
         let _: Vec<_> = output_iter.by_ref().take(2 * 2 * n_blobs).collect();
     }
 
-    let (messages_to_l1, messages_to_l2) = deserialize_messages(output_iter)?;
-
     // state_diff = (
     //     parse_os_state_diff(output_iter=output_iter, full_output=full_output)
     //     if use_kzg_da == 0
@@ -338,21 +307,7 @@ where
     let state_diff =
         if use_kzg_da == Felt252::ZERO { deserialize_os_state_diff(output_iter, full_output)? } else { None };
 
-    Ok(StarknetOsOutput {
-        initial_root: header[PREVIOUS_MERKLE_UPDATE_OFFSET],
-        final_root: header[NEW_MERKLE_UPDATE_OFFSET],
-        prev_block_number: header[PREV_BLOCK_NUMBER_OFFSET],
-        new_block_number: header[NEW_BLOCK_NUMBER_OFFSET],
-        prev_block_hash: header[PREV_BLOCK_HASH_OFFSET],
-        new_block_hash: header[NEW_BLOCK_HASH_OFFSET],
-        os_program_hash: header[OS_PROGRAM_HASH_OFFSET],
-        starknet_os_config_hash: header[CONFIG_HASH_OFFSET],
-        use_kzg_da,
-        full_output,
-        messages_to_l1,
-        messages_to_l2,
-        state_diff,
-    })
+    Ok(StarknetOsOutput { use_kzg_da, full_output, state_diff })
 }
 
 #[cfg(test)]
@@ -363,30 +318,8 @@ mod tests {
     /// Tests that the OS output can be serialized and deserialized properly to JSON.
     fn os_output_serde_json() {
         let os_output = StarknetOsOutput {
-            initial_root: Felt252::from_hex_unchecked(
-                "0x5594a2d89ad4eff183ea6a7f4d4bf247fb799f3db54bc6d94ea441e0c99a4ac",
-            ),
-            final_root: Felt252::from_hex_unchecked(
-                "0x12b31d0ff0c0f5aa076d2e7039d2e19329a8a4a4ada68f42f2e0b6b8af304fd",
-            ),
-            prev_block_number: Felt252::from(9999),
-            new_block_number: Felt252::from(10000),
-            prev_block_hash: Felt252::from_hex_unchecked("0x654321"),
-            new_block_hash: Felt252::from_hex_unchecked("0x123456"),
-            os_program_hash: Felt252::ZERO,
-            starknet_os_config_hash: Felt252::from_hex_unchecked(
-                "0x5d4d0b87442f4c6c120e8d207e27c0e01796ad1e57c5323292ecaf655b53b05",
-            ),
             use_kzg_da: Felt252::ONE,
             full_output: Felt252::ZERO,
-            messages_to_l1: vec![
-                Felt252::from(1234),
-                Felt252::from(5678),
-                Felt252::from(2),
-                Felt252::from(42),
-                Felt252::from(27),
-            ],
-            messages_to_l2: vec![],
             state_diff: Some(OsStateDiff {
                 contract_changes: vec![ContractChanges {
                     addr: Felt252::ONE,

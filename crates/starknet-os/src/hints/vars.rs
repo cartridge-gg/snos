@@ -174,6 +174,9 @@ pub mod ids {
     pub const DECOMPRESSED_DST: &str = "decompressed_dst";
     pub const PACKED_FELT: &str = "packed_felt";
     pub const ELM_BOUND: &str = "elm_bound";
+    pub const CONTRACT_ADDRESS_TO_SHARD: &str = "contract_address_to_shard";
+    pub const SLOTS: &str = "slots";
+    pub const SLOTS_LEN: &str = "slots_len";
 }
 
 pub mod constants {
