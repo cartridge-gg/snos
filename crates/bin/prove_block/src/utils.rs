@@ -126,7 +126,7 @@ fn get_accessed_storage_keys(call_info: &CallInfo) -> HashMap<ContractAddress, H
     accessed_keys_by_address
         .entry(*contract_address)
         .or_default()
-        .extend(call_info.accessed_storage_keys.iter().copied());
+        .extend(call_info.storage_access_tracker.accessed_storage_keys.iter().copied());
 
     for inner_call in &call_info.inner_calls {
         let inner_call_storage_keys = get_accessed_storage_keys(inner_call);

@@ -12,6 +12,7 @@ path = "integration/main.rs"
 
 [dev-dependencies]
 blockifier = { workspace = true }
+blockifier_test_utils = { workspace = true }
 cairo-lang-starknet-classes = { workspace = true }
 cairo-vm = { workspace = true }
 env_logger = { workspace = true }

@@ -2,20 +2,21 @@ use std::collections::HashMap;
 
 use blockifier::context::BlockContext;
 // use blockifier::test_utils::deploy_account::deploy_account_tx;
-use blockifier::test_utils::{create_calldata, BALANCE};
+use blockifier::test_utils::BALANCE;
 use blockifier::transaction::test_utils::{self, max_fee};
+use blockifier_test_utils::calldata::create_calldata;
 use cairo_vm::Felt252;
 use rstest::{fixture, rstest};
-use starknet_api::core::{calculate_contract_address, ClassHash, ContractAddress};
-use starknet_api::test_utils::deploy_account::executable_deploy_account_tx;
+use starknet_api::core::{ClassHash, ContractAddress, calculate_contract_address};
 use starknet_api::test_utils::NonceManager;
-use starknet_api::transaction::fields::{Calldata, ContractAddressSalt, Fee};
+use starknet_api::test_utils::deploy_account::executable_deploy_account_tx;
 use starknet_api::transaction::TransactionVersion;
+use starknet_api::transaction::fields::{Calldata, ContractAddressSalt, Fee};
 use starknet_api::{class_hash, contract_address, deploy_account_tx_args, felt, invoke_tx_args};
 
 use crate::common::block_context;
 use crate::common::blockifier_contracts::{load_cairo0_feature_contract, load_cairo1_feature_contract};
-use crate::common::state::{init_logging, StarknetStateBuilder, StarknetTestState};
+use crate::common::state::{StarknetStateBuilder, StarknetTestState, init_logging};
 use crate::common::transaction_utils::execute_txs_and_run_os;
 
 #[derive(Debug)]
@@ -82,7 +83,6 @@ async fn deploy_cairo0_account(
     let (initial_state, deploy_args) = initial_state_for_deploy_v1.await;
 
     let tx_version = TransactionVersion::ONE;
-    let mut nonce_manager = NonceManager::default();
 
     let account_with_long_validate = initial_state.deployed_cairo0_contracts.get("account_with_long_validate").unwrap();
 
@@ -91,16 +91,13 @@ async fn deploy_cairo0_account(
     // the right one.
     assert_eq!(deploy_args.class_hash, deployed_account_class_hash);
 
-    let deploy_account_tx = executable_deploy_account_tx(
-        deploy_account_tx_args! {
-            class_hash: deployed_account_class_hash,
-            max_fee,
-            contract_address_salt: deploy_args.contract_address_salt,
-            version: tx_version,
-            constructor_calldata: Calldata(deploy_args.constructor_calldata.into())
-        },
-        &mut nonce_manager,
-    );
+    let deploy_account_tx = executable_deploy_account_tx(deploy_account_tx_args! {
+        class_hash: deployed_account_class_hash,
+        max_fee,
+        contract_address_salt: deploy_args.contract_address_salt,
+        version: tx_version,
+        constructor_calldata: Calldata(deploy_args.constructor_calldata.into())
+    });
 
     let transaction = blockifier::transaction::account_transaction::AccountTransaction {
         tx: deploy_account_tx,
@@ -184,7 +181,6 @@ async fn deploy_cairo1_account(
     let (initial_state, deploy_args) = initial_state_for_deploy_v3.await;
 
     let tx_version = TransactionVersion::THREE;
-    let mut nonce_manager = NonceManager::default();
     let account_with_long_validate = initial_state.deployed_cairo1_contracts.get("account_with_long_validate").unwrap();
 
     let deployed_account_class_hash = account_with_long_validate.declaration.class_hash;
@@ -192,16 +188,13 @@ async fn deploy_cairo1_account(
     // the right one.
     assert_eq!(deploy_args.class_hash, deployed_account_class_hash);
 
-    let deploy_account_tx = executable_deploy_account_tx(
-        deploy_account_tx_args! {
-            class_hash: deployed_account_class_hash,
-            max_fee,
-            contract_address_salt: deploy_args.contract_address_salt,
-            version: tx_version,
-            constructor_calldata: Calldata(deploy_args.constructor_calldata.into()),
-        },
-        &mut nonce_manager,
-    );
+    let deploy_account_tx = executable_deploy_account_tx(deploy_account_tx_args! {
+        class_hash: deployed_account_class_hash,
+        max_fee,
+        contract_address_salt: deploy_args.contract_address_salt,
+        version: tx_version,
+        constructor_calldata: Calldata(deploy_args.constructor_calldata.into()),
+    });
 
     let transaction = blockifier::transaction::account_transaction::AccountTransaction {
         tx: deploy_account_tx,
@@ -393,7 +386,6 @@ async fn deploy_cairo0_check_get_info_call(block_context: BlockContext, max_fee:
         .await;
 
     let tx_version = TransactionVersion::ONE;
-    let mut nonce_manager = NonceManager::default();
 
     let account_with_syscall_checks =
         initial_state.deployed_cairo0_contracts.get("account_with_syscall_checks").unwrap();
@@ -403,17 +395,14 @@ async fn deploy_cairo0_check_get_info_call(block_context: BlockContext, max_fee:
     // the right one.
     assert_eq!(class_hash, deployed_account_class_hash);
 
-    let deploy_account_tx = executable_deploy_account_tx(
-        deploy_account_tx_args! {
-            class_hash: deployed_account_class_hash,
-            max_fee,
-            contract_address_salt: ContractAddressSalt::default(),
-            version: tx_version,
-            constructor_calldata: ctor_calldata,
-            ..Default::default()
-        },
-        &mut nonce_manager,
-    );
+    let deploy_account_tx = executable_deploy_account_tx(deploy_account_tx_args! {
+        class_hash: deployed_account_class_hash,
+        max_fee,
+        contract_address_salt: ContractAddressSalt::default(),
+        version: tx_version,
+        constructor_calldata: ctor_calldata,
+        ..Default::default()
+    });
 
     let transaction = blockifier::transaction::account_transaction::AccountTransaction {
         tx: deploy_account_tx,

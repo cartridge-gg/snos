@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use blockifier::context::BlockContext;
-use blockifier::test_utils::create_calldata;
+use blockifier_test_utils::calldata::create_calldata;
 use blockifier::transaction::test_utils;
 use blockifier::transaction::test_utils::max_fee;
 use blockifier::transaction::transaction_execution::Transaction;

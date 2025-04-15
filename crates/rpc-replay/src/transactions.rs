@@ -406,7 +406,7 @@ fn get_execution_flags_from_tx(tx: &starknet_api::executable_transaction::Accoun
                 ExecutionFlags { charge_fee: tx.max_fee.0 != 0, ..Default::default() }
             }
             starknet_api::transaction::InvokeTransaction::V3(ref tx) => {
-                let max_fee = tx.resource_bounds.max_possible_fee();
+                let max_fee = tx.resource_bounds.max_possible_fee(tx.tip);
                 ExecutionFlags { charge_fee: max_fee.0 > 0, ..Default::default() }
             }
         },
@@ -415,7 +415,7 @@ fn get_execution_flags_from_tx(tx: &starknet_api::executable_transaction::Accoun
                 ExecutionFlags { charge_fee: tx.max_fee.0 != 0, ..Default::default() }
             }
             starknet_api::transaction::DeployAccountTransaction::V3(ref tx) => {
-                let max_fee = tx.resource_bounds.max_possible_fee();
+                let max_fee = tx.resource_bounds.max_possible_fee(tx.tip);
                 ExecutionFlags { charge_fee: max_fee.0 > 0, ..Default::default() }
             }
         },
@@ -430,7 +430,7 @@ fn get_execution_flags_from_tx(tx: &starknet_api::executable_transaction::Accoun
                 ExecutionFlags { charge_fee: tx.max_fee.0 != 0, ..Default::default() }
             }
             starknet_api::transaction::DeclareTransaction::V3(ref tx) => {
-                let max_fee = tx.resource_bounds.max_possible_fee();
+                let max_fee = tx.resource_bounds.max_possible_fee(tx.tip);
                 ExecutionFlags { charge_fee: max_fee.0 > 0, ..Default::default() }
             }
         },

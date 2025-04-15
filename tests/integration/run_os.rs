@@ -4,13 +4,13 @@ use std::sync::Arc;
 use blockifier::bouncer::BouncerConfig;
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses};
 use blockifier::state::cached_state::CachedState;
-use blockifier::test_utils::create_calldata;
+use blockifier_test_utils::calldata::create_calldata;
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier::transaction::test_utils::{calculate_class_info_for_testing, invoke_tx_with_default_flags, max_fee};
 use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::ExecutableTransaction;
-use blockifier::versioned_constants::VersionedConstants;
+use blockifier::blockifier_versioned_constants::VersionedConstants;
 use cairo_vm::Felt252;
 use rstest::{fixture, rstest};
 use starknet_api::abi::abi_utils::selector_from_name;
@@ -102,7 +102,7 @@ async fn create_initial_transactions(
         class_hash: dummy_token.class_hash,
         version: TransactionVersion::ONE,
     };
-    let deploy_token_tx = executable_deploy_account_tx(deploy_token_tx_args, nonce_manager);
+    let deploy_token_tx = executable_deploy_account_tx(deploy_token_tx_args);
     let fee_token_address = deploy_token_tx.contract_address();
     let deploy_token_tx = AccountTransaction { tx: deploy_token_tx, execution_flags: Default::default() };
 
@@ -111,7 +111,7 @@ async fn create_initial_transactions(
         version: TransactionVersion::ONE,
     };
 
-    let deploy_account_tx = executable_deploy_account_tx(deploy_account_tx_args, nonce_manager);
+    let deploy_account_tx = executable_deploy_account_tx(deploy_account_tx_args);
     let dummy_account_address = deploy_account_tx.contract_address();
     let deploy_account_tx = AccountTransaction { tx: deploy_account_tx, execution_flags: Default::default() };
 

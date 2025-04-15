@@ -1,11 +1,11 @@
 use std::fs::File;
 use std::path::PathBuf;
 
+use blockifier::blockifier_versioned_constants::VersionedConstants;
 // use blockifier::blockifier::block::{BlockInfo, GasPrices};
 use blockifier::bouncer::BouncerConfig;
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses};
 // use blockifier::transaction::objects::FeeType;
-use blockifier::versioned_constants::VersionedConstants;
 use cairo_vm::types::layout_name::LayoutName;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;

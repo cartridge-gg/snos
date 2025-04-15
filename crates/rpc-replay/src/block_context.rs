@@ -1,6 +1,6 @@
 use blockifier::bouncer::BouncerConfig;
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses};
-use blockifier::versioned_constants::VersionedConstants;
+use blockifier::blockifier_versioned_constants::VersionedConstants;
 use starknet::core::types::{BlockWithTxs, Felt, L1DataAvailabilityMode};
 use starknet_api::block::{
     BlockInfo, BlockNumber, BlockTimestamp, GasPrice, GasPriceVector, GasPrices, NonzeroGasPrice, StarknetVersion,
