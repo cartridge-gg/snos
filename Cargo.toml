@@ -50,7 +50,7 @@ cairo-vm = { git = "https://github.com/kariy/cairo-vm", branch = "kariy/1.0.2_cl
 	"mod_builtin",
 ] }
 clap = { version = "4.5.4", features = ["derive"] }
-c-kzg = { version = "1.0.3" }
+c-kzg = { version = "2.1.0" }
 env_logger = "0.11.3"
 flate2 = "1.0.32"
 futures = "0.3.30"

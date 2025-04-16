@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use std::num::ParseIntError;
 use std::path::Path;
 
-use c_kzg::{Blob, KzgCommitment, BYTES_PER_FIELD_ELEMENT};
+use c_kzg::{BYTES_PER_FIELD_ELEMENT, Blob, KzgCommitment};
+use cairo_vm::Felt252;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
     get_integer_from_var_name, get_ptr_from_var_name, insert_value_from_var_name,
 };
@@ -12,7 +13,6 @@ use cairo_vm::types::exec_scope::ExecutionScopes;
 use cairo_vm::types::relocatable::MaybeRelocatable;
 use cairo_vm::vm::errors::hint_errors::HintError;
 use cairo_vm::vm::vm_core::VirtualMachine;
-use cairo_vm::Felt252;
 use indoc::indoc;
 use num_bigint::{BigInt, ParseBigIntError};
 use num_traits::{Num, One, Zero};
@@ -176,7 +176,8 @@ fn polynomial_coefficients_to_blob(coefficients: Vec<BigInt>) -> Result<Vec<u8>,
 
 pub fn blob_to_kzg_commitment(blob: &Blob) -> Result<KzgCommitment, c_kzg::Error> {
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("kzg").join("trusted_setup.txt");
-    c_kzg::KzgCommitment::blob_to_kzg_commitment(blob, &c_kzg::KzgSettings::load_trusted_setup_file(&path)?)
+    let kzg_settings = c_kzg::KzgSettings::load_trusted_setup_file(&path, 0)?;
+    kzg_settings.blob_to_kzg_commitment(blob)
 }
 
 fn to_bytes(x: &BigInt, length: usize) -> Vec<u8> {
