@@ -5,7 +5,7 @@ use rpc_replay::block_context::build_block_context;
 use rpc_replay::rpc_state_reader::AsyncRpcStateReader;
 use rpc_replay::transactions::starknet_rs_to_blockifier;
 use rstest::rstest;
-use starknet::core::types::{BlockId, BlockWithTxs};
+use starknet::core::types::{BlockWithTxs, ConfirmedBlockId};
 use starknet::providers::Provider;
 use starknet_api::block::{GasPriceVector, GasPrices, StarknetVersion};
 use starknet_api::core::ChainId;
@@ -23,7 +23,7 @@ async fn test_replay_block() {
     let rpc_provider = "http://localhost:9545";
     let rpc_client = RpcClient::new(rpc_provider);
     let previous_block_number = block_with_txs.block_number - 1;
-    let previous_block_id = BlockId::Number(previous_block_number);
+    let previous_block_id = ConfirmedBlockId::Number(previous_block_number);
     let state_reader = AsyncRpcStateReader::new(rpc_client.clone(), Some(previous_block_id));
     let mut state = CachedState::from(state_reader);
 

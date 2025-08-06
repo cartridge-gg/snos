@@ -1,6 +1,6 @@
+use blockifier::blockifier_versioned_constants::VersionedConstants;
 use blockifier::bouncer::BouncerConfig;
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses};
-use blockifier::blockifier_versioned_constants::VersionedConstants;
 use starknet::core::types::{BlockWithTxs, Felt, L1DataAvailabilityMode};
 use starknet_api::block::{
     BlockInfo, BlockNumber, BlockTimestamp, GasPrice, GasPriceVector, GasPrices, NonzeroGasPrice, StarknetVersion,
@@ -101,6 +101,7 @@ mod tests {
             new_root: Felt::ZERO,
             timestamp: 0,
             sequencer_address: Felt::ZERO,
+            l2_gas_price: ResourcePrice { price_in_wei: Felt::ZERO, price_in_fri: Felt::ZERO },
             l1_gas_price: ResourcePrice { price_in_wei: Felt::ZERO, price_in_fri: Felt::ZERO },
             l1_data_gas_price: ResourcePrice { price_in_wei: Felt::ZERO, price_in_fri: Felt::ZERO },
             l1_da_mode: L1DataAvailabilityMode::Blob,
@@ -125,6 +126,8 @@ mod tests {
         let chain_id = ChainId::Mainnet;
 
         // Expected values for gas price
+        let wei_l2_price = 1337;
+        let fri_l2_price = 5555;
         let wei_l1_price = 1234;
         let fri_l1_price = 5678;
         let wei_l1_data_price = 9012;
@@ -138,6 +141,10 @@ mod tests {
             new_root: Felt::ZERO,
             timestamp: 0,
             sequencer_address: Felt::ZERO,
+            l2_gas_price: ResourcePrice {
+                price_in_wei: Felt::from(wei_l2_price),
+                price_in_fri: Felt::from(fri_l2_price),
+            },
             l1_gas_price: ResourcePrice {
                 price_in_wei: Felt::from(wei_l1_price),
                 price_in_fri: Felt::from(fri_l1_price),
@@ -155,6 +162,8 @@ mod tests {
         let block_context = build_block_context(chain_id, &block, starknet_version).unwrap();
 
         // Verify that gas prices match our input values
+        assert_eq!(block_context.block_info().gas_prices.eth_gas_prices.l2_gas_price.get(), GasPrice(wei_l2_price));
+        assert_eq!(block_context.block_info().gas_prices.strk_gas_prices.l2_gas_price.get(), GasPrice(fri_l2_price));
         assert_eq!(block_context.block_info().gas_prices.eth_gas_prices.l1_gas_price.get(), GasPrice(wei_l1_price));
         assert_eq!(block_context.block_info().gas_prices.strk_gas_prices.l1_gas_price.get(), GasPrice(fri_l1_price));
         assert_eq!(

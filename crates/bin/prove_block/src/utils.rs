@@ -39,11 +39,9 @@ pub(crate) fn get_subcalled_contracts_from_tx_traces(
                 }
             }
             TransactionTrace::L1Handler(l1handler_trace) => {
-                process_function_invocations(
-                    &l1handler_trace.function_invocation,
-                    &mut contracts_subcalled,
-                    &mut classes_subcalled,
-                );
+                if let ExecuteInvocation::Success(inv) = &l1handler_trace.function_invocation {
+                    process_function_invocations(inv, &mut contracts_subcalled, &mut classes_subcalled);
+                }
             }
 
             TransactionTrace::DeployAccount(deploy_trace) => {

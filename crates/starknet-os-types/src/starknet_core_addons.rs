@@ -2,11 +2,11 @@
 use std::io::Read;
 
 use flate2::read::GzDecoder;
-use starknet_core::types::contract::legacy::{
+use starknet::core::types::contract::legacy::{
     LegacyContractClass, LegacyEntrypointOffset, RawLegacyAbiEntry, RawLegacyConstructor, RawLegacyEntryPoint,
     RawLegacyEntryPoints, RawLegacyEvent, RawLegacyFunction, RawLegacyL1Handler, RawLegacyMember, RawLegacyStruct,
 };
-use starknet_core::types::{
+use starknet::core::types::{
     CompressedLegacyContractClass, LegacyContractAbiEntry, LegacyContractEntryPoint, LegacyEntryPointsByType,
     LegacyFunctionAbiEntry, LegacyFunctionAbiType, LegacyStructMember,
 };
@@ -105,7 +105,7 @@ pub(crate) fn decompress_starknet_core_contract_class(
     let mut decoder = GzDecoder::new(compressed_legacy_class.program.as_slice());
     decoder.read_to_string(&mut program_str)?;
 
-    let program: starknet_core::types::contract::legacy::LegacyProgram = serde_json::from_str(&program_str)?;
+    let program: starknet::core::types::contract::legacy::LegacyProgram = serde_json::from_str(&program_str)?;
     let abi = compressed_legacy_class
         .abi
         .unwrap_or_default()
@@ -124,7 +124,7 @@ pub(crate) fn decompress_starknet_core_contract_class(
 
 #[cfg(test)]
 mod tests {
-    use starknet_core::types::contract::legacy::LegacyContractClass;
+    use starknet::core::types::contract::legacy::LegacyContractClass;
 
     use crate::starknet_core_addons::decompress_starknet_core_contract_class;
 

@@ -1,4 +1,4 @@
-use starknet::core::types::Felt;
+use starknet::core::types::{BlockId, BlockTag, ConfirmedBlockId, Felt};
 use thiserror::Error;
 
 /// Executes a coroutine from a synchronous context.
@@ -29,6 +29,15 @@ pub fn felt_to_u128(felt: &Felt) -> Result<u128, FeltConversionError> {
 
     // Safe conversion since we've checked for overflow
     Ok(((digits[2] as u128) << 64) + digits[3] as u128)
+}
+
+pub fn confirmed_block_id_to_block_id(confirmed_id: ConfirmedBlockId) -> BlockId {
+    match confirmed_id {
+        ConfirmedBlockId::Hash(hash) => BlockId::Hash(hash),
+        ConfirmedBlockId::Number(number) => BlockId::Number(number),
+        ConfirmedBlockId::Latest => BlockId::Tag(BlockTag::Latest),
+        ConfirmedBlockId::L1Accepted => BlockId::Tag(BlockTag::L1Accepted),
+    }
 }
 
 #[cfg(test)]

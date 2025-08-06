@@ -2,7 +2,10 @@ use std::collections::{HashMap, HashSet};
 
 use cairo_vm::Felt252;
 use rpc_client::RpcClient;
-use starknet::core::types::{BlockId, MaybePendingStateUpdate, StarknetError, StateDiff, TransactionTraceWithHash};
+use rpc_replay::utils::confirmed_block_id_to_block_id;
+use starknet::core::types::{
+    ConfirmedBlockId, MaybePreConfirmedStateUpdate, StarknetError, StateDiff, TransactionTraceWithHash,
+};
 use starknet::providers::{Provider, ProviderError};
 use starknet_os_types::casm_contract_class::GenericCasmContractClass;
 use starknet_os_types::class_hash_utils::ContractClassComponentHashes;
@@ -11,8 +14,8 @@ use starknet_os_types::deprecated_compiled_class::GenericDeprecatedCompiledClass
 use starknet_os_types::sierra_contract_class::GenericSierraContractClass;
 use starknet_types_core::felt::Felt;
 
-use crate::utils::get_subcalled_contracts_from_tx_traces;
 use crate::ProveBlockError;
+use crate::utils::get_subcalled_contracts_from_tx_traces;
 
 #[derive(Clone)]
 pub struct FormattedStateUpdate {
@@ -30,16 +33,21 @@ pub struct FormattedStateUpdate {
 /// - Consolidates that information into a `FormattedStateUpdate`.
 pub(crate) async fn get_formatted_state_update(
     rpc_client: &RpcClient,
-    previous_block_id: Option<BlockId>,
-    block_id: BlockId,
+    previous_block_id: Option<ConfirmedBlockId>,
+    block_id: ConfirmedBlockId,
 ) -> Result<(FormattedStateUpdate, Vec<TransactionTraceWithHash>), ProveBlockError> {
-    let state_update =
-        match rpc_client.starknet_rpc().get_state_update(block_id).await.expect("Failed to get state update") {
-            MaybePendingStateUpdate::Update(update) => update,
-            MaybePendingStateUpdate::PendingUpdate(_) => {
-                panic!("Block is still pending!")
-            }
-        };
+    let state_update = match rpc_client
+        .starknet_rpc()
+        .get_state_update(confirmed_block_id_to_block_id(block_id))
+        .await
+        .expect("Failed to get state update")
+    {
+        MaybePreConfirmedStateUpdate::Update(update) => update,
+        MaybePreConfirmedStateUpdate::PreConfirmedUpdate(_) => {
+            panic!("Block is still pending!")
+        }
+    };
+
     let state_diff = state_update.state_diff;
 
     // Extract other contracts used in our block from the block trace
@@ -104,13 +112,15 @@ fn compile_contract_class(
 async fn add_compiled_class_from_contract_to_os_input(
     rpc_client: &RpcClient,
     contract_address: Felt,
-    block_id: BlockId,
+    block_id: ConfirmedBlockId,
     class_hash_to_compiled_class_hash: &mut HashMap<Felt252, Felt252>,
     compiled_contract_classes: &mut HashMap<Felt, GenericCasmContractClass>,
     deprecated_compiled_contract_classes: &mut HashMap<Felt, GenericDeprecatedCompiledClass>,
 ) -> Result<(), ProveBlockError> {
-    let class_hash = rpc_client.starknet_rpc().get_class_hash_at(block_id, contract_address).await?;
-    let contract_class = rpc_client.starknet_rpc().get_class(block_id, class_hash).await?;
+    let class_hash =
+        rpc_client.starknet_rpc().get_class_hash_at(confirmed_block_id_to_block_id(block_id), contract_address).await?;
+    let contract_class =
+        rpc_client.starknet_rpc().get_class(confirmed_block_id_to_block_id(block_id), class_hash).await?;
 
     add_compiled_class_to_os_input(
         class_hash,
@@ -166,8 +176,8 @@ fn add_compiled_class_to_os_input(
 /// the `class_hash_to_compiled_class_hash` map is updated with new entries.
 async fn build_compiled_class_and_maybe_update_class_hash_to_compiled_class_hash(
     provider: &RpcClient,
-    previous_block_id: Option<BlockId>,
-    block_id: BlockId,
+    previous_block_id: Option<ConfirmedBlockId>,
+    block_id: ConfirmedBlockId,
     accessed_addresses: &HashSet<Felt252>,
     declared_classes: &HashSet<Felt252>,
     accessed_classes: &HashSet<Felt252>,
@@ -219,7 +229,9 @@ async fn build_compiled_class_and_maybe_update_class_hash_to_compiled_class_hash
     }
 
     for class_hash in accessed_classes {
-        let contract_class = provider.starknet_rpc().get_class(block_id, class_hash).await?;
+        let contract_class =
+            provider.starknet_rpc().get_class(confirmed_block_id_to_block_id(block_id), class_hash).await?;
+
         add_compiled_class_to_os_input(
             *class_hash,
             contract_class,
@@ -231,7 +243,9 @@ async fn build_compiled_class_and_maybe_update_class_hash_to_compiled_class_hash
 
     let mut declared_class_hash_to_component_hashes = HashMap::new();
     for class_hash in declared_classes {
-        let contract_class = provider.starknet_rpc().get_class(block_id, class_hash).await?;
+        let contract_class =
+            provider.starknet_rpc().get_class(confirmed_block_id_to_block_id(block_id), class_hash).await?;
+
         if let starknet::core::types::ContractClass::Sierra(flattened_sierra_class) = &contract_class {
             let component_hashes = ContractClassComponentHashes::from(flattened_sierra_class.clone());
             declared_class_hash_to_component_hashes.insert(*class_hash, component_hashes);

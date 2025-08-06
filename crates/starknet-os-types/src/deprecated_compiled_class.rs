@@ -6,11 +6,11 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::error::ContractClassError;
 use crate::hash::GenericClassHash;
-use crate::starknet_core_addons::{LegacyContractDecompressionError, decompress_starknet_core_contract_class};
+use crate::starknet_core_addons::{decompress_starknet_core_contract_class, LegacyContractDecompressionError};
 
 pub type StarknetApiDeprecatedClass = starknet_api::deprecated_contract_class::ContractClass;
-pub type StarknetCoreDeprecatedClass = starknet_core::types::contract::legacy::LegacyContractClass;
-pub type CompressedStarknetCoreDeprecatedClass = starknet_core::types::CompressedLegacyContractClass;
+pub type StarknetCoreDeprecatedClass = starknet::core::types::contract::legacy::LegacyContractClass;
+pub type CompressedStarknetCoreDeprecatedClass = starknet::core::types::CompressedLegacyContractClass;
 pub type BlockifierDeprecatedClass = blockifier::execution::contract_class::CompiledClassV0;
 
 /// A generic contract class that supports conversion to/from the most commonly used

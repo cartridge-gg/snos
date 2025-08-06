@@ -1,5 +1,5 @@
-use starknet_core::types::SierraEntryPoint;
-use starknet_core::utils::starknet_keccak;
+use starknet::core::types::SierraEntryPoint;
+use starknet::core::utils::starknet_keccak;
 use starknet_crypto::poseidon_hash_many;
 use starknet_types_core::felt::Felt;
 
@@ -54,8 +54,8 @@ impl ContractClassComponentHashes {
     }
 }
 
-impl From<starknet_core::types::FlattenedSierraClass> for ContractClassComponentHashes {
-    fn from(sierra_class: starknet_core::types::FlattenedSierraClass) -> Self {
+impl From<starknet::core::types::FlattenedSierraClass> for ContractClassComponentHashes {
+    fn from(sierra_class: starknet::core::types::FlattenedSierraClass) -> Self {
         let version_str = format!("{CLASS_VERSION_PREFIX}{}", sierra_class.contract_class_version);
         let contract_class_version = Felt::from_bytes_be_slice(version_str.as_bytes());
 
@@ -79,7 +79,7 @@ impl From<starknet_core::types::FlattenedSierraClass> for ContractClassComponent
 #[cfg(test)]
 mod tests {
     use rstest::rstest;
-    use starknet_core::types::contract::SierraClass;
+    use starknet::core::types::contract::SierraClass;
 
     use super::*;
 

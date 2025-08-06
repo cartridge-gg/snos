@@ -2,7 +2,7 @@ use blockifier::execution::contract_class::RunnableCompiledClass;
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{StateReader, StateResult};
 use rpc_client::client::RpcClient;
-use starknet::core::types::{BlockId, Felt, StarknetError};
+use starknet::core::types::{ConfirmedBlockId, Felt, StarknetError};
 use starknet::providers::{Provider, ProviderError};
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::state::StorageKey;
@@ -10,15 +10,15 @@ use starknet_os_types::deprecated_compiled_class::GenericDeprecatedCompiledClass
 use starknet_os_types::hash::GenericClassHash;
 use starknet_os_types::sierra_contract_class::GenericSierraContractClass;
 
-use crate::utils::execute_coroutine;
+use crate::utils::{confirmed_block_id_to_block_id, execute_coroutine};
 
 pub struct AsyncRpcStateReader {
     rpc_client: RpcClient,
-    block_id: Option<BlockId>,
+    block_id: Option<ConfirmedBlockId>,
 }
 
 impl AsyncRpcStateReader {
-    pub fn new(rpc_client: RpcClient, block_id: Option<BlockId>) -> Self {
+    pub fn new(rpc_client: RpcClient, block_id: Option<ConfirmedBlockId>) -> Self {
         Self { rpc_client, block_id }
     }
 }
@@ -34,12 +34,16 @@ fn to_state_err<E: ToString>(e: E) -> StateError {
 impl AsyncRpcStateReader {
     pub async fn get_storage_at_async(&self, contract_address: ContractAddress, key: StorageKey) -> StateResult<Felt> {
         if let Some(id) = self.block_id {
-            let storage_value =
-                match self.rpc_client.starknet_rpc().get_storage_at(*contract_address.key(), *key.0.key(), id).await {
-                    Ok(value) => Ok(value),
-                    Err(ProviderError::StarknetError(StarknetError::ContractNotFound)) => Ok(Felt::ZERO),
-                    Err(e) => Err(provider_error_to_state_error(e)),
-                }?;
+            let storage_value = match self
+                .rpc_client
+                .starknet_rpc()
+                .get_storage_at(*contract_address.key(), *key.0.key(), confirmed_block_id_to_block_id(id))
+                .await
+            {
+                Ok(value) => Ok(value),
+                Err(ProviderError::StarknetError(StarknetError::ContractNotFound)) => Ok(Felt::ZERO),
+                Err(e) => Err(provider_error_to_state_error(e)),
+            }?;
 
             Ok(storage_value)
         } else {
@@ -49,7 +53,11 @@ impl AsyncRpcStateReader {
 
     pub async fn get_nonce_at_async(&self, contract_address: ContractAddress) -> StateResult<Nonce> {
         if let Some(id) = self.block_id {
-            let res = self.rpc_client.starknet_rpc().get_nonce(id, *contract_address.key()).await;
+            let res = self
+                .rpc_client
+                .starknet_rpc()
+                .get_nonce(confirmed_block_id_to_block_id(id), *contract_address.key())
+                .await;
             let nonce = match res {
                 Ok(value) => Ok(value),
                 Err(ProviderError::StarknetError(StarknetError::ContractNotFound)) => Ok(Felt::ZERO),
@@ -63,7 +71,12 @@ impl AsyncRpcStateReader {
 
     pub async fn get_class_hash_at_async(&self, contract_address: ContractAddress) -> StateResult<ClassHash> {
         if let Some(id) = self.block_id {
-            let class_hash = match self.rpc_client.starknet_rpc().get_class_hash_at(id, *contract_address.key()).await {
+            let class_hash = match self
+                .rpc_client
+                .starknet_rpc()
+                .get_class_hash_at(confirmed_block_id_to_block_id(id), *contract_address.key())
+                .await
+            {
                 Ok(class_hash) => Ok(class_hash),
                 Err(ProviderError::StarknetError(StarknetError::ContractNotFound)) => Ok(ClassHash::default().0),
                 Err(e) => Err(provider_error_to_state_error(e)),
@@ -77,7 +90,12 @@ impl AsyncRpcStateReader {
 
     pub async fn get_compiled_contract_class_async(&self, class_hash: ClassHash) -> StateResult<RunnableCompiledClass> {
         if let Some(id) = self.block_id {
-            let contract_class = match self.rpc_client.starknet_rpc().get_class(id, class_hash.0).await {
+            let contract_class = match self
+                .rpc_client
+                .starknet_rpc()
+                .get_class(confirmed_block_id_to_block_id(id), class_hash.0)
+                .await
+            {
                 Ok(contract_class) => Ok(contract_class),
                 Err(ProviderError::StarknetError(StarknetError::ClassHashNotFound)) => {
                     Err(StateError::UndeclaredClassHash(ClassHash(class_hash.0)))
@@ -109,7 +127,7 @@ impl AsyncRpcStateReader {
             let contract_class = self
                 .rpc_client
                 .starknet_rpc()
-                .get_class(id, class_hash.0)
+                .get_class(confirmed_block_id_to_block_id(id), class_hash.0)
                 .await
                 .map_err(provider_error_to_state_error)?;
 

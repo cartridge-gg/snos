@@ -2,23 +2,26 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use blockifier::state::cached_state::CachedState;
+use cairo_vm::Felt252;
 use cairo_vm::types::layout_name::LayoutName;
 use cairo_vm::types::relocatable::MaybeRelocatable;
 use cairo_vm::vm::errors::cairo_run_errors::CairoRunError;
 use cairo_vm::vm::runners::cairo_pie::CairoPie;
-use cairo_vm::Felt252;
-use reexecute::{reexecute_transactions_with_blockifier, ProverPerContractStorage};
-use rpc_client::pathfinder::proofs::{PathfinderClassProof, PathfinderProof, ProofVerificationError};
+use reexecute::{ProverPerContractStorage, reexecute_transactions_with_blockifier};
 use rpc_client::RpcClient;
+use rpc_client::pathfinder::proofs::{PathfinderClassProof, PathfinderProof, ProofVerificationError};
 use rpc_replay::block_context::build_block_context;
 use rpc_replay::rpc_state_reader::AsyncRpcStateReader;
-use rpc_replay::transactions::{starknet_rs_to_blockifier, ToBlockifierError};
+use rpc_replay::transactions::{ToBlockifierError, starknet_rs_to_blockifier};
 use rpc_replay::utils::FeltConversionError;
+use rpc_replay::utils::confirmed_block_id_to_block_id;
 use rpc_utils::{get_class_proofs, get_storage_proofs};
-use starknet::core::types::{BlockId, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StarknetError};
+use starknet::core::types::{
+    BlockId, ConfirmedBlockId, MaybePreConfirmedBlockWithTxHashes, MaybePreConfirmedBlockWithTxs, StarknetError,
+};
 use starknet::providers::{Provider, ProviderError};
 use starknet_api::StarknetApiError;
-use starknet_os::config::{StarknetGeneralConfig, StarknetOsConfig, STORED_BLOCK_HASH_BUFFER};
+use starknet_os::config::{STORED_BLOCK_HASH_BUFFER, StarknetGeneralConfig, StarknetOsConfig};
 use starknet_os::crypto::pedersen::PedersenHash;
 use starknet_os::crypto::poseidon::PoseidonHash;
 use starknet_os::error::SnOsError::{self};
@@ -119,8 +122,8 @@ pub async fn prove_block(
     layout: LayoutName,
     full_output: bool,
 ) -> Result<(CairoPie, StarknetOsOutput), ProveBlockError> {
-    let block_id = BlockId::Number(block_number);
-    let previous_block_id = if block_number == 0 { None } else { Some(BlockId::Number(block_number - 1)) };
+    let block_id = ConfirmedBlockId::Number(block_number);
+    let previous_block_id = if block_number == 0 { None } else { Some(ConfirmedBlockId::Number(block_number - 1)) };
 
     let rpc_client = RpcClient::new(rpc_provider);
 
@@ -128,20 +131,21 @@ pub async fn prove_block(
     let chain_id = chain_id_from_felt(rpc_client.starknet_rpc().chain_id().await?);
     log::debug!("provider's chain_id: {}", chain_id);
 
-    let block_with_txs = match rpc_client.starknet_rpc().get_block_with_txs(block_id).await? {
-        MaybePendingBlockWithTxs::Block(block_with_txs) => block_with_txs,
-        MaybePendingBlockWithTxs::PendingBlock(_) => {
-            panic!("Block is still pending!");
-        }
-    };
+    let block_with_txs =
+        match rpc_client.starknet_rpc().get_block_with_txs(confirmed_block_id_to_block_id(block_id)).await? {
+            MaybePreConfirmedBlockWithTxs::Block(block_with_txs) => block_with_txs,
+            MaybePreConfirmedBlockWithTxs::PreConfirmedBlock(_) => {
+                panic!("Block is still pending!");
+            }
+        };
 
     let starknet_version = get_starknet_version(&block_with_txs);
     log::debug!("Starknet version: {:?}", starknet_version);
 
     let previous_block_hash = if let Some(id) = previous_block_id {
-        match rpc_client.starknet_rpc().get_block_with_tx_hashes(id).await? {
-            MaybePendingBlockWithTxHashes::Block(block_with_txs) => block_with_txs.block_hash,
-            MaybePendingBlockWithTxHashes::PendingBlock(_) => {
+        match rpc_client.starknet_rpc().get_block_with_tx_hashes(confirmed_block_id_to_block_id(id)).await? {
+            MaybePreConfirmedBlockWithTxHashes::Block(block_with_txs) => block_with_txs.block_hash,
+            MaybePreConfirmedBlockWithTxHashes::PreConfirmedBlock(_) => {
                 panic!("Block is still pending!");
             }
         }
@@ -157,8 +161,8 @@ pub async fn prove_block(
 
     let older_block =
         match rpc_client.starknet_rpc().get_block_with_tx_hashes(BlockId::Number(older_block_number)).await? {
-            MaybePendingBlockWithTxHashes::Block(block_with_txs_hashes) => block_with_txs_hashes,
-            MaybePendingBlockWithTxHashes::PendingBlock(_) => {
+            MaybePreConfirmedBlockWithTxHashes::Block(block_with_txs_hashes) => block_with_txs_hashes,
+            MaybePreConfirmedBlockWithTxHashes::PreConfirmedBlock(_) => {
                 panic!("Block is still pending!");
             }
         };
@@ -249,20 +253,31 @@ pub async fn prove_block(
         let (previous_class_hash, previous_nonce) = if [Felt252::ZERO, Felt252::ONE].contains(&contract_address) {
             (Felt252::ZERO, Felt252::ZERO)
         } else if let Some(prev_block_id) = previous_block_id {
-            let previous_class_hash =
-                match rpc_client.starknet_rpc().get_class_hash_at(prev_block_id, contract_address).await {
-                    Ok(class_hash) => Ok(class_hash),
-                    Err(ProviderError::StarknetError(StarknetError::ContractNotFound)) => Ok(Felt252::ZERO),
-                    Err(e) => Err(e),
-                }?;
+            let previous_class_hash = match rpc_client
+                .starknet_rpc()
+                .get_class_hash_at(confirmed_block_id_to_block_id(prev_block_id), contract_address)
+                .await
+            {
+                Ok(class_hash) => Ok(class_hash),
+                Err(ProviderError::StarknetError(StarknetError::ContractNotFound)) => Ok(Felt252::ZERO),
+                Err(e) => Err(e),
+            }?;
 
-            let previous_nonce = match rpc_client.starknet_rpc().get_nonce(prev_block_id, contract_address).await {
+            let previous_nonce = match rpc_client
+                .starknet_rpc()
+                .get_nonce(confirmed_block_id_to_block_id(prev_block_id), contract_address)
+                .await
+            {
                 Ok(nonce) => Ok(nonce),
                 Err(ProviderError::StarknetError(StarknetError::ContractNotFound)) => Ok(Felt252::ZERO),
                 Err(e) => Err(e),
             }?;
 
-            let class_hash = rpc_client.starknet_rpc().get_class_hash_at(block_id, contract_address).await?;
+            let class_hash = rpc_client
+                .starknet_rpc()
+                .get_class_hash_at(confirmed_block_id_to_block_id(block_id), contract_address)
+                .await?;
+
             contract_address_to_class_hash.insert(contract_address, class_hash);
 
             (previous_class_hash, previous_nonce)

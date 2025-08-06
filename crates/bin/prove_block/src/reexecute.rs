@@ -9,9 +9,10 @@ use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::ExecutableTransaction;
 use cairo_vm::Felt252;
-use rpc_client::pathfinder::proofs::{ContractData, PathfinderProof, TrieNode};
 use rpc_client::RpcClient;
-use starknet::core::types::{BlockId, StarknetError};
+use rpc_client::pathfinder::proofs::{ContractData, PathfinderProof, TrieNode};
+use rpc_replay::utils::confirmed_block_id_to_block_id;
+use starknet::core::types::{ConfirmedBlockId, StarknetError};
 use starknet::providers::{Provider as _, ProviderError};
 use starknet_api::block::BlockHashAndNumber;
 use starknet_api::transaction::TransactionHash;
@@ -93,7 +94,7 @@ pub fn reexecute_transactions_with_blockifier<S: StateReader>(
 
 pub(crate) struct ProverPerContractStorage {
     rpc_client: RpcClient,
-    block_id: Option<BlockId>,
+    block_id: Option<ConfirmedBlockId>,
     contract_address: Felt252,
     previous_tree_root: Felt252,
     storage_proof: PathfinderProof,
@@ -104,7 +105,7 @@ pub(crate) struct ProverPerContractStorage {
 impl ProverPerContractStorage {
     pub fn new(
         rpc_client: RpcClient,
-        block_id: Option<BlockId>,
+        block_id: Option<ConfirmedBlockId>,
         contract_address: Felt252,
         previous_tree_root: Felt252,
         storage_proof: PathfinderProof,
@@ -196,13 +197,17 @@ impl PerContractStorage for ProverPerContractStorage {
         } else if let Some(id) = self.block_id {
             let key_felt = Felt252::from(key.clone());
             // TODO: this should be fallible
-            let value =
-                match self.rpc_client.starknet_rpc().get_storage_at(self.contract_address, key_felt, id).await {
-                    Ok(value) => Ok(value),
-                    Err(ProviderError::StarknetError(StarknetError::ContractNotFound)) => Ok(Felt252::ZERO),
-                    Err(e) => Err(e),
-                }
-                .unwrap();
+            let value = match self
+                .rpc_client
+                .starknet_rpc()
+                .get_storage_at(self.contract_address, key_felt, confirmed_block_id_to_block_id(id))
+                .await
+            {
+                Ok(value) => Ok(value),
+                Err(ProviderError::StarknetError(StarknetError::ContractNotFound)) => Ok(Felt252::ZERO),
+                Err(e) => Err(e),
+            }
+            .unwrap();
             self.ongoing_storage_changes.insert(key, value);
             Some(value)
         } else {

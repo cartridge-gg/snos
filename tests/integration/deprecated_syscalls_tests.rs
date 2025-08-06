@@ -8,9 +8,9 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use blockifier::context::BlockContext;
-use blockifier_test_utils::calldata::create_calldata;
 use blockifier::transaction::test_utils::{self, max_fee};
 use blockifier::transaction::transaction_execution::Transaction;
+use blockifier_test_utils::calldata::create_calldata;
 use cairo_vm::Felt252;
 use num_traits::ToPrimitive;
 use rstest::rstest;

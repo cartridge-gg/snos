@@ -264,10 +264,9 @@ fn l1_handler_to_blockifier(
     };
 
     let (l1_gas, l1_data_gas) = match &trace.trace_root {
-        TransactionTrace::L1Handler(l1_handler) => (
-            l1_handler.execution_resources.data_resources.data_availability.l1_gas,
-            l1_handler.execution_resources.data_resources.data_availability.l1_data_gas,
-        ),
+        TransactionTrace::L1Handler(l1_handler) => {
+            (l1_handler.execution_resources.l1_gas, l1_handler.execution_resources.l1_data_gas)
+        }
         _ => unreachable!("Expected L1Handler type for TransactionTrace"),
     };
 

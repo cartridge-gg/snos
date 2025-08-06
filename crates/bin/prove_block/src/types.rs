@@ -8,7 +8,7 @@ use starknet::core::types::{
     InvokeTransaction, InvokeTransactionV0, InvokeTransactionV1, InvokeTransactionV3, L1HandlerTransaction,
     Transaction,
 };
-use starknet_api::core::{calculate_contract_address, ClassHash};
+use starknet_api::core::{ClassHash, calculate_contract_address};
 use starknet_api::transaction::fields::{Calldata, ContractAddressSalt};
 use starknet_os::io::InternalTransaction;
 
@@ -399,6 +399,7 @@ mod tests {
             resource_bounds: ResourceBoundsMapping {
                 l1_gas: ResourceBounds { max_amount: 100, max_price_per_unit: 1 },
                 l2_gas: ResourceBounds { max_amount: 100, max_price_per_unit: 1 },
+                l1_data_gas: ResourceBounds { max_amount: 100, max_price_per_unit: 1 },
             },
             tip: 100,
             paymaster_data: vec![Felt::from(8), Felt::from(9)],
@@ -493,6 +494,7 @@ mod tests {
             resource_bounds: ResourceBoundsMapping {
                 l1_gas: ResourceBounds { max_amount: 100, max_price_per_unit: 1 },
                 l2_gas: ResourceBounds { max_amount: 100, max_price_per_unit: 1 },
+                l1_data_gas: ResourceBounds { max_amount: 100, max_price_per_unit: 1 },
             },
             tip: 100,
             paymaster_data: vec![Felt::from(9), Felt::from(10)],

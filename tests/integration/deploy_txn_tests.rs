@@ -7,16 +7,16 @@ use blockifier::transaction::test_utils::{self, max_fee};
 use blockifier_test_utils::calldata::create_calldata;
 use cairo_vm::Felt252;
 use rstest::{fixture, rstest};
-use starknet_api::core::{ClassHash, ContractAddress, calculate_contract_address};
-use starknet_api::test_utils::NonceManager;
+use starknet_api::core::{calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::test_utils::deploy_account::executable_deploy_account_tx;
-use starknet_api::transaction::TransactionVersion;
+use starknet_api::test_utils::NonceManager;
 use starknet_api::transaction::fields::{Calldata, ContractAddressSalt, Fee};
+use starknet_api::transaction::TransactionVersion;
 use starknet_api::{class_hash, contract_address, deploy_account_tx_args, felt, invoke_tx_args};
 
 use crate::common::block_context;
 use crate::common::blockifier_contracts::{load_cairo0_feature_contract, load_cairo1_feature_contract};
-use crate::common::state::{StarknetStateBuilder, StarknetTestState, init_logging};
+use crate::common::state::{init_logging, StarknetStateBuilder, StarknetTestState};
 use crate::common::transaction_utils::execute_txs_and_run_os;
 
 #[derive(Debug)]

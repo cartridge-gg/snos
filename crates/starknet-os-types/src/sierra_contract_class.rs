@@ -5,7 +5,7 @@ use once_cell::sync::OnceCell;
 use serde::ser::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_with::serde_as;
-use starknet_core::types::{EntryPointsByType, FlattenedSierraClass};
+use starknet::core::types::{EntryPointsByType, FlattenedSierraClass};
 use starknet_types_core::felt::Felt;
 
 use crate::casm_contract_class::{CairoLangCasmClass, GenericCasmContractClass};
@@ -13,7 +13,7 @@ use crate::error::ContractClassError;
 use crate::hash::GenericClassHash;
 
 pub type CairoLangSierraContractClass = cairo_lang_starknet_classes::contract_class::ContractClass;
-pub type StarknetCoreSierraContractClass = starknet_core::types::FlattenedSierraClass;
+pub type StarknetCoreSierraContractClass = starknet::core::types::FlattenedSierraClass;
 
 /// A generic Sierra contract class that supports conversion to/from the most commonly used
 /// contract class types in Starknet and provides utility methods.
@@ -52,7 +52,7 @@ impl GenericSierraContractClass {
 
     fn build_starknet_core_class(&self) -> Result<StarknetCoreSierraContractClass, ContractClassError> {
         let serialized_class = self.get_serialized_contract_class()?;
-        let sierra_class: starknet_core::types::contract::SierraClass =
+        let sierra_class: starknet::core::types::contract::SierraClass =
             serde_json::from_slice(serialized_class).map_err(ContractClassError::SerdeError)?;
 
         sierra_class.flatten().map_err(|e| ContractClassError::SerdeError(serde_json::Error::custom(e)))
