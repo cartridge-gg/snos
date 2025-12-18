@@ -126,7 +126,7 @@ checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 [[package]]
 name = "apollo_compile_to_native_types"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "apollo_config",
  "serde",
@@ -136,7 +136,7 @@ dependencies = [
 [[package]]
 name = "apollo_config"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "apollo_infra_utils",
  "clap",
@@ -154,7 +154,7 @@ dependencies = [
 [[package]]
 name = "apollo_infra_utils"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "apollo_proc_macros",
  "assert-json-diff",
@@ -173,7 +173,7 @@ dependencies = [
 [[package]]
 name = "apollo_metrics"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "indexmap 2.12.1",
  "metrics 0.24.3",
@@ -185,7 +185,7 @@ dependencies = [
 [[package]]
 name = "apollo_proc_macros"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "lazy_static",
  "proc-macro2",
@@ -196,7 +196,7 @@ dependencies = [
 [[package]]
 name = "apollo_sizeof"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "apollo_sizeof_macros",
  "starknet-types-core",
@@ -205,7 +205,7 @@ dependencies = [
 [[package]]
 name = "apollo_sizeof_macros"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -215,7 +215,7 @@ dependencies = [
 [[package]]
 name = "apollo_starknet_os_program"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "apollo_infra_utils",
  "cairo-vm",
@@ -1128,7 +1128,7 @@ dependencies = [
 [[package]]
 name = "blockifier"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "anyhow",
  "apollo_compile_to_native_types",
@@ -1176,7 +1176,7 @@ dependencies = [
 [[package]]
 name = "blockifier_test_utils"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "apollo_infra_utils",
  "cairo-lang-starknet-classes",
@@ -4512,7 +4512,7 @@ dependencies = [
 [[package]]
 name = "papyrus_common"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "cairo-lang-starknet-classes",
  "indexmap 2.12.1",
@@ -5915,7 +5915,7 @@ dependencies = [
 [[package]]
 name = "shared_execution_objects"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "blockifier",
  "serde",
@@ -6299,7 +6299,7 @@ dependencies = [
 [[package]]
 name = "starknet_api"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "apollo_infra_utils",
  "apollo_sizeof",
@@ -6337,7 +6337,7 @@ dependencies = [
 [[package]]
 name = "starknet_os"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "apollo_starknet_os_program",
  "ark-bls12-381",
@@ -6382,7 +6382,7 @@ dependencies = [
 [[package]]
 name = "starknet_patricia"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "async-recursion",
  "derive_more 0.99.20",
@@ -6403,7 +6403,7 @@ dependencies = [
 [[package]]
 name = "starknet_patricia_storage"
 version = "0.16.0-rc.2"
-source = "git+https://github.com/karnotxyz/sequencer?tag=v0.14.1-alpha.0#9c2b40665faae1fee2fe264b1dbcb1286879563f"
+source = "git+https://github.com/chudkowsky/sequencer.git?branch=feat%2Fdisable-aliasing#77a40d1a662263f64ceb202d3d85d3f9c402a551"
 dependencies = [
  "hex",
  "serde",
